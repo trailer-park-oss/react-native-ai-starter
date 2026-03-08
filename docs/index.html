@@ -3,631 +3,333 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>create-rn-ai-starter — Ship React Native apps faster</title>
-  <meta name="description" content="CLI to scaffold production-ready Expo React Native projects with modular feature packs: UI kits, auth, payments, and more." />
+  <title>create-rn-ai-starter</title>
+  <meta name="description" content="CLI to scaffold Expo React Native projects with modular feature packs." />
   <style>
+    /*
+     * All colors from the app's Radix design tokens (dark mode, blue preset, slate neutral).
+     * Spacing: xs=4 sm=8 md=16 lg=24 xl=32 2xl=48 3xl=64
+     * Radius: sm=4 md=8 lg=12
+     * Typography sizes: caption=12 body=14 bodyLarge=16 heading=20/600 headingLarge=28/700 display=36/700
+     */
     :root {
-      --bg: #0a0a0f;
-      --surface: #12121a;
-      --border: #1e1e2e;
-      --text: #e4e4ef;
-      --text-subtle: #8888a0;
-      --accent: #6e56cf;
-      --accent-hover: #7c66dc;
-      --accent-subtle: rgba(110, 86, 207, 0.12);
-      --green: #30a46c;
-      --green-subtle: rgba(48, 164, 108, 0.12);
-      --orange: #e5a336;
-      --orange-subtle: rgba(229, 163, 54, 0.12);
-      --cyan: #05a2c2;
-      --red: #e5484d;
-      --radius: 12px;
-      --radius-sm: 8px;
-      --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      --mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
+      /* slate dark 1-12 */
+      --slate1: #111113; --slate2: #18191b; --slate3: #212225; --slate4: #272a2d;
+      --slate5: #2e3135; --slate6: #363a3f; --slate7: #43484e; --slate8: #5a6169;
+      --slate9: #696e77; --slate10: #777b84; --slate11: #b0b4ba; --slate12: #edeef0;
+      /* blue dark 9-11 */
+      --blue9: #0090ff; --blue10: #3b9eff; --blue11: #70b8ff;
+      /* semantic (from deriveDarkTokens) */
+      --bg: var(--slate1); --bg-subtle: var(--slate2);
+      --surface: var(--slate3); --surface-raised: var(--slate4);
+      --text: var(--slate12); --text-subtle: var(--slate11);
+      --border: var(--slate6); --border-subtle: var(--slate4);
+      --primary: var(--blue9); --primary-hover: var(--blue10);
+      --success: #30a46c; --warning: #f76b15; --critical: #e5484d;
+      --success-subtle: #132d21; --critical-subtle: #3b1219;
+      /* font */
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
     html { scroll-behavior: smooth; }
 
     body {
       font-family: var(--font);
       background: var(--bg);
       color: var(--text);
-      line-height: 1.6;
+      line-height: 1.5;
       -webkit-font-smoothing: antialiased;
     }
 
-    a { color: var(--accent); text-decoration: none; }
-    a:hover { color: var(--accent-hover); }
+    a { color: var(--primary); text-decoration: none; }
 
-    /* Nav */
+    /* ── Nav (thin, quiet — like the app's tab bar) ── */
     nav {
-      position: fixed;
-      top: 0;
-      width: 100%;
-      z-index: 100;
-      background: rgba(10, 10, 15, 0.85);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
-      padding: 0 24px;
+      position: fixed; top: 0; width: 100%; z-index: 10;
+      background: rgba(17,17,19,0.92);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border-subtle);
     }
     .nav-inner {
-      max-width: 1100px;
-      margin: 0 auto;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      height: 56px;
+      max-width: 640px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 48px; padding: 0 24px;
     }
-    .nav-logo {
-      font-weight: 700;
-      font-size: 15px;
-      color: var(--text);
-      letter-spacing: -0.02em;
-    }
-    .nav-logo span { color: var(--accent); }
-    .nav-links { display: flex; gap: 28px; }
-    .nav-links a {
-      color: var(--text-subtle);
-      font-size: 14px;
-      font-weight: 500;
-      transition: color 0.15s;
-    }
+    .nav-name { font-size: 14px; font-weight: 600; color: var(--text); }
+    .nav-links { display: flex; gap: 24px; }
+    .nav-links a { font-size: 14px; color: var(--text-subtle); }
     .nav-links a:hover { color: var(--text); }
-    .nav-gh {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 14px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      font-size: 13px;
-      color: var(--text-subtle);
-      transition: border-color 0.15s, color 0.15s;
-    }
-    .nav-gh:hover { border-color: var(--text-subtle); color: var(--text); }
-    .nav-gh svg { width: 16px; height: 16px; fill: currentColor; }
 
-    /* Hero */
-    .hero {
-      padding: 140px 24px 80px;
-      text-align: center;
-      max-width: 800px;
-      margin: 0 auto;
-    }
-    .hero-badge {
-      display: inline-block;
-      padding: 4px 14px;
-      border-radius: 20px;
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--accent);
-      background: var(--accent-subtle);
-      margin-bottom: 24px;
-    }
+    /* ── Container ── */
+    .wrap { max-width: 640px; margin: 0 auto; padding: 0 24px; }
+    section { padding: 64px 0; }
+    section + section { border-top: 1px solid var(--border-subtle); }
+
+    /* ── Hero (left-aligned like the sign-in screen) ── */
+    .hero { padding: 112px 0 64px; }
     .hero h1 {
-      font-size: clamp(36px, 6vw, 56px);
-      font-weight: 800;
-      letter-spacing: -0.03em;
-      line-height: 1.1;
-      margin-bottom: 20px;
+      font-size: 36px; font-weight: 700; line-height: 44px;
+      letter-spacing: -0.02em; margin-bottom: 8px;
     }
-    .hero h1 .gradient {
-      background: linear-gradient(135deg, var(--accent), var(--cyan));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+    .hero .sub {
+      font-size: 16px; color: var(--text-subtle); line-height: 24px;
+      margin-bottom: 32px;
     }
-    .hero p {
-      font-size: 18px;
-      color: var(--text-subtle);
-      max-width: 540px;
-      margin: 0 auto 36px;
-      line-height: 1.7;
-    }
-    .hero-actions {
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-    .btn-primary {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 12px 28px;
-      background: var(--accent);
-      color: #fff;
-      font-weight: 600;
-      font-size: 15px;
-      border-radius: var(--radius-sm);
-      border: none;
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-    .btn-primary:hover { background: var(--accent-hover); color: #fff; }
-    .btn-secondary {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 12px 28px;
-      background: transparent;
-      color: var(--text);
-      font-weight: 600;
-      font-size: 15px;
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--border);
-      cursor: pointer;
-      transition: border-color 0.15s;
-    }
-    .btn-secondary:hover { border-color: var(--text-subtle); color: #fff; }
 
-    /* Terminal */
-    .terminal-wrap {
-      max-width: 620px;
-      margin: 48px auto 0;
-    }
+    /* ── Terminal (surface + border, same as app cards) ── */
     .terminal {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
+      border-radius: 8px;
       overflow: hidden;
+      margin-bottom: 32px;
     }
     .terminal-bar {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--border);
+      display: flex; gap: 6px;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border-subtle);
     }
-    .terminal-dot {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
+    .terminal-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--slate7); }
+    .terminal pre {
+      padding: 16px;
+      font-family: var(--mono); font-size: 13px; line-height: 1.7;
+      overflow-x: auto; color: var(--text-subtle);
     }
-    .terminal-dot.r { background: #e5484d; }
-    .terminal-dot.y { background: #e5a336; }
-    .terminal-dot.g { background: #30a46c; }
-    .terminal-body {
-      padding: 20px 24px;
-      font-family: var(--mono);
-      font-size: 14px;
-      line-height: 1.8;
-    }
-    .terminal-body .prompt { color: var(--green); }
-    .terminal-body .cmd { color: var(--text); }
-    .terminal-body .flag { color: var(--cyan); }
-    .terminal-body .value { color: var(--orange); }
-    .terminal-body .comment { color: var(--text-subtle); }
+    .terminal .g { color: var(--success); }
+    .terminal .w { color: var(--text); }
+    .terminal .b { color: var(--blue11); }
+    .terminal .o { color: var(--warning); }
 
-    /* Sections */
-    section {
-      padding: 80px 24px;
-      max-width: 1100px;
-      margin: 0 auto;
-    }
-    .section-label {
-      font-size: 13px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--accent);
-      margin-bottom: 12px;
-    }
-    section h2 {
-      font-size: 32px;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      margin-bottom: 12px;
-    }
-    section > p {
-      font-size: 16px;
-      color: var(--text-subtle);
-      max-width: 560px;
-      margin-bottom: 48px;
-    }
-
-    /* Feature grid */
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 20px;
-    }
-    .feature-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 28px;
-      transition: border-color 0.2s;
-    }
-    .feature-card:hover { border-color: var(--accent); }
-    .feature-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      margin-bottom: 16px;
-    }
-    .feature-card h3 {
-      font-size: 17px;
-      font-weight: 600;
-      margin-bottom: 8px;
-    }
-    .feature-card p {
-      font-size: 14px;
-      color: var(--text-subtle);
-      line-height: 1.6;
-    }
-    .feature-card .tag {
+    /* ── Buttons (matches PrimaryButton: primary bg, 8px radius, 600 weight) ── */
+    .actions { display: flex; gap: 8px; }
+    .btn {
       display: inline-block;
-      margin-top: 12px;
-      padding: 2px 10px;
-      border-radius: 12px;
-      font-size: 12px;
-      font-weight: 500;
+      padding: 10px 20px;
+      font-size: 14px; font-weight: 600;
+      border-radius: 8px; border: 1px solid transparent;
     }
-    .tag-ready { background: var(--green-subtle); color: var(--green); }
-    .tag-soon { background: var(--orange-subtle); color: var(--orange); }
+    .btn-p { background: var(--primary); color: #fff; border-radius: 8px; }
+    .btn-p:hover { background: var(--primary-hover); color: #fff; }
+    .btn-o { background: transparent; border-color: var(--border); color: var(--text); border-radius: 8px; }
+    .btn-o:hover { border-color: var(--slate7); }
 
-    /* Pack options table */
-    .options-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 8px;
-    }
-    .options-table th,
-    .options-table td {
-      text-align: left;
-      padding: 12px 16px;
-      font-size: 14px;
-      border-bottom: 1px solid var(--border);
-    }
-    .options-table th {
-      color: var(--text-subtle);
-      font-weight: 500;
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-    }
-    .options-table td:first-child {
-      font-family: var(--mono);
-      font-size: 13px;
-      color: var(--cyan);
-    }
-    .options-table code {
-      font-family: var(--mono);
-      font-size: 13px;
-      background: var(--accent-subtle);
-      padding: 2px 8px;
-      border-radius: 4px;
-      color: var(--accent);
-    }
-    .table-wrap {
+    /* ── Section headings (heading token: 20px/600) ── */
+    section h2 { font-size: 20px; font-weight: 600; line-height: 28px; margin-bottom: 4px; }
+    section .desc { font-size: 14px; color: var(--text-subtle); margin-bottom: 24px; }
+
+    /* ── Feature rows (flat, 1px border, 8px radius — identical to app surfaces) ── */
+    .rows { display: flex; flex-direction: column; gap: 8px; }
+    .row {
       background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
+      border: 1px solid var(--border-subtle);
+      border-radius: 0;
+      padding: 16px;
+    }
+    .row h3 { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+    .row p { font-size: 14px; color: var(--text-subtle); line-height: 20px; }
+    .tag {
+      display: inline-block; margin-top: 8px;
+      padding: 2px 8px; border-radius: 4px;
+      font-size: 12px; font-weight: 500;
+    }
+    .t-ok { background: var(--success-subtle); color: var(--success); }
+    .t-wip { background: var(--surface-raised); color: var(--text-subtle); }
+
+    /* ── Table (matches app's TextInput: surface bg, border, 8px radius) ── */
+    .tbl-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 0;
       overflow-x: auto;
     }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 10px 16px; font-size: 14px; border-bottom: 1px solid var(--border-subtle); }
+    th { font-size: 12px; font-weight: 500; color: var(--text-subtle); text-transform: uppercase; letter-spacing: 0.04em; }
+    td:first-child { font-family: var(--mono); font-size: 13px; color: var(--blue11); }
+    td code {
+      font-family: var(--mono); font-size: 12px;
+      background: var(--surface-raised); padding: 2px 6px; border-radius: 4px;
+    }
+    tbody tr:last-child td { border-bottom: none; }
 
-    /* Architecture */
-    .arch-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 16px;
+    /* ── Steps (numbered, vertical — like onboarding flow) ── */
+    .steps { display: flex; flex-direction: column; gap: 16px; }
+    .step { display: flex; gap: 16px; }
+    .step-n {
+      flex-shrink: 0; width: 24px; height: 24px;
+      border-radius: 50%; background: var(--surface); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 600; color: var(--text-subtle);
     }
-    .arch-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 24px;
-    }
-    .arch-card h4 {
-      font-size: 14px;
-      font-weight: 600;
-      margin-bottom: 8px;
-      color: var(--text);
-    }
-    .arch-card p {
-      font-size: 13px;
-      color: var(--text-subtle);
-      line-height: 1.5;
-    }
-
-    /* Quickstart */
-    .quickstart-steps {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 20px;
-    }
-    .step-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 28px;
-    }
-    .step-number {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: var(--accent-subtle);
-      color: var(--accent);
-      font-size: 13px;
-      font-weight: 700;
-      margin-bottom: 14px;
-    }
-    .step-card h4 {
-      font-size: 15px;
-      font-weight: 600;
-      margin-bottom: 8px;
-    }
-    .step-card code {
-      display: block;
-      font-family: var(--mono);
-      font-size: 13px;
-      color: var(--green);
-      background: rgba(48, 164, 108, 0.08);
-      padding: 10px 14px;
-      border-radius: var(--radius-sm);
-      margin-top: 8px;
-      overflow-x: auto;
-    }
-    .step-card p {
-      font-size: 14px;
-      color: var(--text-subtle);
+    .step-body h4 { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+    .step-body p { font-size: 14px; color: var(--text-subtle); }
+    .step-body code {
+      display: block; margin-top: 8px;
+      font-family: var(--mono); font-size: 13px;
+      background: var(--surface); border: 1px solid var(--border-subtle);
+      padding: 8px 16px; border-radius: 0; color: var(--text-subtle);
     }
 
-    /* Footer */
+    /* ── Footer ── */
     footer {
-      border-top: 1px solid var(--border);
-      padding: 32px 24px;
-      text-align: center;
-      font-size: 14px;
-      color: var(--text-subtle);
+      border-top: 1px solid var(--border-subtle);
+      padding: 24px 0; font-size: 14px; color: var(--text-subtle); text-align: center;
     }
     footer a { color: var(--text-subtle); }
     footer a:hover { color: var(--text); }
 
-    /* Mobile */
-    @media (max-width: 640px) {
+    @media (max-width: 540px) {
       .nav-links { display: none; }
-      .hero { padding: 120px 20px 60px; }
-      section { padding: 60px 20px; }
-      .features-grid { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 28px; line-height: 36px; }
     }
   </style>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 </head>
 <body>
 
-<!-- Nav -->
 <nav>
   <div class="nav-inner">
-    <div class="nav-logo">create-rn-ai-starter</div>
+    <span class="nav-name">create-rn-ai-starter</span>
     <div class="nav-links">
       <a href="#features">Features</a>
       <a href="#options">Options</a>
-      <a href="#architecture">Architecture</a>
       <a href="#quickstart">Quickstart</a>
+      <a href="https://github.com/trailer-park-oss/react-native-ai-starter" target="_blank">GitHub</a>
     </div>
-    <a class="nav-gh" href="https://github.com/trailer-park-oss/react-native-ai-starter" target="_blank" rel="noopener">
-      <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-      GitHub
-    </a>
   </div>
 </nav>
 
-<!-- Hero -->
-<div class="hero">
-  <div class="hero-badge">Open Source CLI</div>
-  <h1>
-    Ship <span class="gradient">React Native</span> apps<br />in minutes, not months
-  </h1>
-  <p>
-    A CLI that scaffolds production-ready Expo projects with modular feature packs — UI kits, authentication, theming, and more. Pick what you need, skip what you don't.
-  </p>
-  <div class="hero-actions">
-    <a class="btn-primary" href="#quickstart">Get Started</a>
-    <a class="btn-secondary" href="https://github.com/trailer-park-oss/react-native-ai-starter" target="_blank" rel="noopener">View on GitHub</a>
-  </div>
+<div class="wrap">
 
-  <div class="terminal-wrap">
+  <div class="hero">
+    <h1>Scaffold Expo apps<br>with everything wired up.</h1>
+    <p class="sub">A CLI that generates production-ready React Native projects. Pick a UI kit, auth provider, and theme preset — get a working app with routing, state, and screens.</p>
+
     <div class="terminal">
       <div class="terminal-bar">
-        <div class="terminal-dot r"></div>
-        <div class="terminal-dot y"></div>
-        <div class="terminal-dot g"></div>
+        <div class="terminal-dot"></div>
+        <div class="terminal-dot"></div>
+        <div class="terminal-dot"></div>
       </div>
-      <div class="terminal-body">
-        <span class="prompt">$</span> <span class="cmd">npx</span> <span class="value">@trailer-park-oss/create-rn-ai-starter</span> <span class="cmd">my-app</span><br />
-        <br />
-        <span class="comment"># or with flags:</span><br />
-        <span class="prompt">$</span> <span class="cmd">npx</span> <span class="value">@trailer-park-oss/create-rn-ai-starter</span> <span class="cmd">my-app</span> \<br />
-        &nbsp;&nbsp;<span class="flag">--ui</span> <span class="value">tamagui</span> \<br />
-        &nbsp;&nbsp;<span class="flag">--auth</span> <span class="value">clerk</span> \<br />
-        &nbsp;&nbsp;<span class="flag">--preset</span> <span class="value">radix-purple</span>
-      </div>
+<pre><span class="g">$</span> <span class="w">npx @trailer-park-oss/create-rn-ai-starter my-app</span>
+
+<span class="g">$</span> <span class="w">npx @trailer-park-oss/create-rn-ai-starter my-app</span> \
+    <span class="b">--ui</span> <span class="o">tamagui</span> <span class="b">--auth</span> <span class="o">clerk</span> <span class="b">--preset</span> <span class="o">radix-purple</span></pre>
+    </div>
+
+    <div class="actions">
+      <a class="btn btn-p" href="#quickstart">Get started</a>
+      <a class="btn btn-o" href="https://github.com/trailer-park-oss/react-native-ai-starter" target="_blank">Source</a>
     </div>
   </div>
+
+  <section id="features">
+    <h2>Feature packs</h2>
+    <p class="desc">Each feature is a standalone pack. Enable what you need — the CLI wires it together.</p>
+    <div class="rows">
+      <div class="row">
+        <h3>UI Kit</h3>
+        <p>Tamagui or Gluestack. Radix design tokens, dark mode, components (Card, PrimaryButton, StatusBanner).</p>
+        <span class="tag t-ok">Ready</span>
+      </div>
+      <div class="row">
+        <h3>Authentication</h3>
+        <p>Clerk with sign-in, sign-up, OTP verification, password reset, OAuth. React Hook Form + Zod validation.</p>
+        <span class="tag t-ok">Ready</span>
+      </div>
+      <div class="row">
+        <h3>Routing</h3>
+        <p>Expo Router file-based routing, tab navigation, onboarding flow, auth-gated screens.</p>
+        <span class="tag t-ok">Ready</span>
+      </div>
+      <div class="row">
+        <h3>Payments</h3>
+        <p>Stripe integration with paywall screens and subscription management.</p>
+        <span class="tag t-wip">Coming soon</span>
+      </div>
+      <div class="row">
+        <h3>AI</h3>
+        <p>On-device ML Kit or online via OpenRouter.</p>
+        <span class="tag t-wip">Coming soon</span>
+      </div>
+      <div class="row">
+        <h3>DX</h3>
+        <p>ESLint, Prettier, TypeScript strict mode, path aliases, CI templates.</p>
+        <span class="tag t-wip">Coming soon</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="options">
+    <h2>CLI flags</h2>
+    <p class="desc">Pass flags or use the interactive prompt. Add <code style="font-family:var(--mono);font-size:12px;background:var(--surface-raised);padding:2px 6px;border-radius:4px;">--yes</code> to skip prompts.</p>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Flag</th><th>Values</th><th>Default</th></tr></thead>
+        <tbody>
+          <tr><td>--ui</td><td><code>tamagui</code> <code>gluestack</code></td><td>tamagui</td></tr>
+          <tr><td>--auth</td><td><code>clerk</code> <code>none</code></td><td>none</td></tr>
+          <tr><td>--preset</td><td><code>radix-blue</code> <code>radix-green</code> <code>radix-purple</code> <code>radix-orange</code> <code>radix-cyan</code> <code>radix-red</code></td><td>radix-blue</td></tr>
+          <tr><td>--yes</td><td>—</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>What's inside</h2>
+    <p class="desc">Every generated project uses these foundations.</p>
+    <div class="rows">
+      <div class="row"><h3>Expo SDK + Router</h3><p>Managed workflow with file-based routing and the full Expo ecosystem.</p></div>
+      <div class="row"><h3>Zustand</h3><p>Lightweight state for onboarding, theme, and app state.</p></div>
+      <div class="row"><h3>TanStack Query</h3><p>Data fetching with caching and background refetch.</p></div>
+      <div class="row"><h3>React Hook Form + Zod</h3><p>Type-safe forms with schema validation.</p></div>
+      <div class="row"><h3>Radix Design Tokens</h3><p>12-step color scales, spacing, typography, radius. Light and dark mode. 6 presets.</p></div>
+      <div class="row"><h3>Provider Pattern</h3><p>Abstract interfaces for auth, payments, UI. Swap implementations without touching screens.</p></div>
+    </div>
+  </section>
+
+  <section id="quickstart">
+    <h2>Quickstart</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-n">1</div>
+        <div class="step-body">
+          <h4>Scaffold</h4>
+          <p>Run the CLI and pick your options.</p>
+          <code>npx @trailer-park-oss/create-rn-ai-starter my-app</code>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">2</div>
+        <div class="step-body">
+          <h4>Configure</h4>
+          <p>If using Clerk, add your publishable key.</p>
+          <code>EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_...</code>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">3</div>
+        <div class="step-body">
+          <h4>Run</h4>
+          <p>Start the dev server.</p>
+          <code>cd my-app && npx expo start</code>
+        </div>
+      </div>
+    </div>
+  </section>
+
 </div>
 
-<!-- Features -->
-<section id="features">
-  <div class="section-label">Feature Packs</div>
-  <h2>Modular by design</h2>
-  <p>Each feature is an independent pack. Enable what you need — the generator wires everything together.</p>
-
-  <div class="features-grid">
-    <div class="feature-card">
-      <div class="feature-icon" style="background: var(--accent-subtle);">&#x1f3a8;</div>
-      <h3>UI Kit</h3>
-      <p>Choose between <strong>Tamagui</strong> or <strong>Gluestack</strong>. Get a design system with tokens, theming, dark mode, and pre-built components (Card, PrimaryButton, StatusBanner).</p>
-      <span class="tag tag-ready">Ready</span>
-    </div>
-
-    <div class="feature-card">
-      <div class="feature-icon" style="background: var(--green-subtle);">&#x1f510;</div>
-      <h3>Authentication</h3>
-      <p><strong>Clerk</strong> integration with sign-in, sign-up, email verification (OTP), password reset, and OAuth (Google, Apple). Validated with React Hook Form + Zod.</p>
-      <span class="tag tag-ready">Ready</span>
-    </div>
-
-    <div class="feature-card">
-      <div class="feature-icon" style="background: rgba(5, 162, 194, 0.12);">&#x1f9ed;</div>
-      <h3>Routing &amp; Navigation</h3>
-      <p>Expo Router with file-based routing, tab navigation, onboarding flow, and auth-gated screens. All wired up out of the box.</p>
-      <span class="tag tag-ready">Ready</span>
-    </div>
-
-    <div class="feature-card">
-      <div class="feature-icon" style="background: rgba(229, 163, 54, 0.12);">&#x1f4b3;</div>
-      <h3>Payments</h3>
-      <p>Stripe integration with paywall screens and subscription management. Modular provider interface — swap implementations without touching UI.</p>
-      <span class="tag tag-soon">Coming Soon</span>
-    </div>
-
-    <div class="feature-card">
-      <div class="feature-icon" style="background: rgba(229, 72, 77, 0.12);">&#x1f916;</div>
-      <h3>AI</h3>
-      <p>On-device ML Kit or online via OpenRouter. Abstracted provider interface ready for integration.</p>
-      <span class="tag tag-soon">Coming Soon</span>
-    </div>
-
-    <div class="feature-card">
-      <div class="feature-icon" style="background: rgba(136, 136, 160, 0.12);">&#x1f6e0;</div>
-      <h3>Developer Experience</h3>
-      <p>ESLint, Prettier, TypeScript strict mode, path aliases, and CI templates. Choose basic or full DX profile.</p>
-      <span class="tag tag-soon">Coming Soon</span>
-    </div>
-  </div>
-</section>
-
-<!-- Options -->
-<section id="options">
-  <div class="section-label">Configuration</div>
-  <h2>CLI Flags</h2>
-  <p>Pass flags directly or use the interactive prompt. Combine <code style="font-family:var(--mono);background:var(--accent-subtle);padding:2px 8px;border-radius:4px;color:var(--accent);font-size:14px;">--yes</code> to accept defaults.</p>
-
-  <div class="table-wrap">
-    <table class="options-table">
-      <thead>
-        <tr>
-          <th>Flag</th>
-          <th>Values</th>
-          <th>Default</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>--ui</td>
-          <td><code>tamagui</code> <code>gluestack</code></td>
-          <td>tamagui</td>
-          <td>UI component library</td>
-        </tr>
-        <tr>
-          <td>--auth</td>
-          <td><code>clerk</code> <code>none</code></td>
-          <td>none</td>
-          <td>Authentication provider</td>
-        </tr>
-        <tr>
-          <td>--preset</td>
-          <td><code>radix-blue</code> <code>radix-green</code> <code>radix-purple</code> <code>radix-orange</code> <code>radix-cyan</code> <code>radix-red</code></td>
-          <td>radix-blue</td>
-          <td>Theme color preset</td>
-        </tr>
-        <tr>
-          <td>--yes</td>
-          <td>-</td>
-          <td>-</td>
-          <td>Skip prompts, use defaults</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</section>
-
-<!-- Architecture -->
-<section id="architecture">
-  <div class="section-label">Under the hood</div>
-  <h2>Built on solid foundations</h2>
-  <p>Every generated project follows a clean, scalable architecture with battle-tested libraries.</p>
-
-  <div class="arch-grid">
-    <div class="arch-card">
-      <h4>Expo SDK</h4>
-      <p>Managed workflow with expo-router, expo-secure-store, and the full Expo ecosystem.</p>
-    </div>
-    <div class="arch-card">
-      <h4>Zustand</h4>
-      <p>Lightweight state management for onboarding, theme preferences, and app state.</p>
-    </div>
-    <div class="arch-card">
-      <h4>TanStack Query</h4>
-      <p>Data fetching with caching, background refetching, and optimistic updates.</p>
-    </div>
-    <div class="arch-card">
-      <h4>React Hook Form + Zod</h4>
-      <p>Type-safe form validation with schema-first design and minimal re-renders.</p>
-    </div>
-    <div class="arch-card">
-      <h4>Design Tokens</h4>
-      <p>Unified token system for colors, spacing, typography, and elevation — works across UI kits.</p>
-    </div>
-    <div class="arch-card">
-      <h4>Provider Pattern</h4>
-      <p>Abstract interfaces for auth, payments, and UI. Swap implementations without changing screens.</p>
-    </div>
-  </div>
-</section>
-
-<!-- Quickstart -->
-<section id="quickstart">
-  <div class="section-label">Get Started</div>
-  <h2>Up and running in 3 steps</h2>
-  <p>From zero to a running app in under a minute.</p>
-
-  <div class="quickstart-steps">
-    <div class="step-card">
-      <div class="step-number">1</div>
-      <h4>Scaffold your project</h4>
-      <p>Run the CLI and pick your options — or pass flags to skip prompts.</p>
-      <code>npx @trailer-park-oss/create-rn-ai-starter my-app</code>
-    </div>
-    <div class="step-card">
-      <div class="step-number">2</div>
-      <h4>Add your keys</h4>
-      <p>If using Clerk auth, add your publishable key to <strong>.env</strong>.</p>
-      <code>EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_...</code>
-    </div>
-    <div class="step-card">
-      <div class="step-number">3</div>
-      <h4>Start developing</h4>
-      <p>Launch the dev server and open on your device or simulator.</p>
-      <code>cd my-app && npx expo start</code>
-    </div>
-  </div>
-</section>
-
-<!-- Footer -->
 <footer>
-  <p>
-    Built by <a href="https://github.com/trailer-park-oss" target="_blank" rel="noopener">trailer-park-oss</a>
-    &nbsp;&middot;&nbsp;
-    <a href="https://github.com/trailer-park-oss/react-native-ai-starter" target="_blank" rel="noopener">GitHub</a>
-    &nbsp;&middot;&nbsp;
-    <a href="https://www.npmjs.com/package/@trailer-park-oss/create-rn-ai-starter" target="_blank" rel="noopener">npm</a>
-  </p>
+  <div class="wrap">
+    <a href="https://github.com/trailer-park-oss" target="_blank">trailer-park-oss</a>
+    &middot;
+    <a href="https://github.com/trailer-park-oss/react-native-ai-starter" target="_blank">GitHub</a>
+    &middot;
+    <a href="https://www.npmjs.com/package/@trailer-park-oss/create-rn-ai-starter" target="_blank">npm</a>
+  </div>
 </footer>
 
 </body>
