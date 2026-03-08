@@ -7,6 +7,7 @@ import { DEFAULT_CONFIG } from '@/config.js'
 import { getActivePacks } from '@/pack-registry.js'
 import { buildBasePackageJson, mergePackDependencies } from '@/utils/package-json.js'
 import { renderTemplates, type TemplateData } from '@/utils/template.js'
+import { getUIKit } from '@/packs/ui/kits.js'
 
 async function exists(p: string): Promise<boolean> {
   try {
@@ -28,6 +29,7 @@ function toTemplateData(projectName: string, config: StarterConfig): TemplateDat
     hasAuth: config.auth !== 'none',
     hasPayments: config.payments !== 'none',
     isFullDx: config.dx === 'full',
+    uiKit: getUIKit(config.ui),
   }
 }
 
@@ -54,6 +56,7 @@ describe('generator — template rendering', () => {
 
     expect(await exists(path.join(tmpDir, 'src/starter.config.ts'))).toBe(true)
     expect(await exists(path.join(tmpDir, 'tsconfig.json'))).toBe(true)
+    expect(await exists(path.join(tmpDir, 'babel.config.js'))).toBe(true)
     expect(await exists(path.join(tmpDir, 'app.json'))).toBe(true)
     expect(await exists(path.join(tmpDir, 'app/_layout.tsx'))).toBe(true)
     expect(await exists(path.join(tmpDir, 'app/index.tsx'))).toBe(true)
@@ -104,28 +107,23 @@ describe('generator — template rendering', () => {
     expect(content).toContain('export const starterConfig: StarterConfig')
   })
 
-  it('includes auth import in root layout when auth is enabled', async () => {
+  it('includes auth screen in root layout Stack when auth is enabled', async () => {
     tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-starter-'))
     const data = toTemplateData('auth-app', { ...DEFAULT_CONFIG, auth: 'clerk' })
 
     await renderTemplates('core', tmpDir, data)
 
     const content = await readFile(path.join(tmpDir, 'app/_layout.tsx'), 'utf-8')
-    expect(content).toContain("import { useAuth } from '@/providers/auth'")
-    expect(content).toContain('isAuthenticated')
-    expect(content).toContain('isAuthLoading')
-    expect(content).toContain("router.replace('/(auth)/sign-in')")
+    expect(content).toContain('(auth)')
   })
 
-  it('excludes auth import in root layout when auth is none', async () => {
+  it('excludes auth screen in root layout Stack when auth is none', async () => {
     tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-starter-'))
     const data = toTemplateData('no-auth-app', DEFAULT_CONFIG)
 
     await renderTemplates('core', tmpDir, data)
 
     const content = await readFile(path.join(tmpDir, 'app/_layout.tsx'), 'utf-8')
-    expect(content).not.toContain("import { useAuth }")
-    expect(content).not.toContain('isAuthenticated')
     expect(content).not.toContain('(auth)')
   })
 
@@ -409,14 +407,15 @@ describe('route group generation', () => {
     expect(content).toContain("title: 'Settings'")
   })
 
-  it('root layout wraps with SafeAreaProvider and QueryClientProvider', async () => {
+  it('root layout wraps with SafeAreaProvider, QueryClientProvider, ThemeProvider', async () => {
     tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-starter-'))
     await renderTemplates('core', tmpDir, toTemplateData('layout-app', DEFAULT_CONFIG))
 
     const content = await readFile(path.join(tmpDir, 'app/_layout.tsx'), 'utf-8')
     expect(content).toContain('SafeAreaProvider')
     expect(content).toContain('QueryClientProvider')
-    expect(content).toContain('queryClient')
+    expect(content).toContain('ThemeProvider')
+    expect(content).toContain('Stack')
   })
 
   it('get-started screen calls onboarding complete and navigates to app', async () => {
@@ -490,5 +489,241 @@ describe('package.json generation', () => {
 
     expect(result.overrides).toHaveProperty('react')
     expect(result.overrides.react).toBe(result.dependencies['react'])
+  })
+})
+
+describe('UI kit pattern — tamagui screens', () => {
+  let tmpDir: string
+
+  afterEach(async () => {
+    if (tmpDir) await rm(tmpDir, { recursive: true, force: true })
+  })
+
+  it('welcome screen imports YStack and Text from tamagui', async () => {
+    tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-starter-'))
+    await renderTemplates('core', tmpDir, toTemplateData('tam-app', { ...DEFAULT_CONFIG, ui: 'tamagui' }))
+
+    const content = await readFile(path.join(tmpDir, 'app/(onboarding)/welcome.tsx'), 'utf-8')
+    expect(content).toContain("import { YStack, Text } from 'tamagui'")
+    expect(content).toContain('useTokens')
+    expect(content).toContain('PrimaryButton')
+  })
+
+  it('home screen uses YStack as container', async () => {
+    tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-starter-'))
+    await renderTemplates('core', tmpDir, toTemplateData('tam-app', { ...DEFAULT_CONFIG, ui: 'tamagui' }))
+
+    const content = await readFile(path.join(tmpDir, 'app/(app)/index.tsx'), 'utf-8')
+    expect(content).toContain("import { YStack, Text } from 'tamagui'")
+    expect(content).toContain('<YStack')
+    expect(content).not.toContain('VStack')
+    expect(content).not.toContain('StyleSheet')
+  })
+
+  it('all tamagui screens use design tokens not hardcoded styles', async () => {
+    tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-starter-'))
+    await renderTemplates('core', tmpDir, toTemplateData('tam-app', { ...DEFAULT_CONFIG, ui: 'tamagui' }))
+
+    for (const screen of ['welcome', 'features', 'get-started']) {
+      const content = await readFile(path.join(tmpDir, `app/(onboarding)/${screen}.tsx`), 'utf-8')
+      expect(content).toContain("from '@/design-system'")
+      expect(content).toContain('useTokens()')
+      expect(content).not.toContain('StyleSheet.create')
+    }
+
+    for (const screen of ['index', 'profile', 'settings']) {
+      const content = await readFile(path.join(tmpDir, `app/(app)/${screen}.tsx`), 'utf-8')
+      expect(content).toContain("from '@/design-system'")
+      expect(content).toContain('useTokens()')
+      expect(content).not.toContain('StyleSheet.create')
+    }
+  })
+})
+
+describe('UI kit pattern — gluestack screens', () => {
+  let tmpDir: string
+
+  afterEach(async () => {
+    if (tmpDir) await rm(tmpDir, { recursive: true, force: true })
+  })
+
+  it('welcome screen imports VStack and Text from gluestack', async () => {
+    tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-starter-'))
+    await renderTemplates('core', tmpDir, toTemplateData('gs-app', { ...DEFAULT_CONFIG, ui: 'gluestack' }))
+
+    const content = await readFile(path.join(tmpDir, 'app/(onboarding)/welcome.tsx'), 'utf-8')
+    expect(content).toContain("import { VStack, Text } from '@gluestack-ui/themed'")
+    expect(content).toContain('useTokens')
+    expect(content).toContain('PrimaryButton')
+  })
+
+  it('home screen uses VStack as container', async () => {
+    tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-starter-'))
+    await renderTemplates('core', tmpDir, toTemplateData('gs-app', { ...DEFAULT_CONFIG, ui: 'gluestack' }))
+
+    const content = await readFile(path.join(tmpDir, 'app/(app)/index.tsx'), 'utf-8')
+    expect(content).toContain("import { VStack, Text } from '@gluestack-ui/themed'")
+    expect(content).toContain('<VStack')
+    expect(content).not.toContain('YStack')
+    expect(content).not.toContain('StyleSheet')
+  })
+
+  it('all gluestack screens use design tokens not hardcoded styles', async () => {
+    tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-starter-'))
+    await renderTemplates('core', tmpDir, toTemplateData('gs-app', { ...DEFAULT_CONFIG, ui: 'gluestack' }))
+
+    for (const screen of ['welcome', 'features', 'get-started']) {
+      const content = await readFile(path.join(tmpDir, `app/(onboarding)/${screen}.tsx`), 'utf-8')
+      expect(content).toContain("from '@/design-system'")
+      expect(content).toContain('useTokens()')
+      expect(content).not.toContain('StyleSheet.create')
+    }
+
+    for (const screen of ['index', 'profile', 'settings']) {
+      const content = await readFile(path.join(tmpDir, `app/(app)/${screen}.tsx`), 'utf-8')
+      expect(content).toContain("from '@/design-system'")
+      expect(content).toContain('useTokens()')
+      expect(content).not.toContain('StyleSheet.create')
+    }
+  })
+})
+
+describe('UI kit pattern — root layout', () => {
+  let tmpDir: string
+
+  afterEach(async () => {
+    if (tmpDir) await rm(tmpDir, { recursive: true, force: true })
+  })
+
+  it('root layout wraps with ThemeProvider', async () => {
+    tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-starter-'))
+    await renderTemplates('core', tmpDir, toTemplateData('theme-layout', DEFAULT_CONFIG))
+
+    const content = await readFile(path.join(tmpDir, 'app/_layout.tsx'), 'utf-8')
+    expect(content).toContain('ThemeProvider')
+    expect(content).toContain("from '@/design-system'")
+  })
+
+  it('root layout uses Stack navigator with explicit screen declarations', async () => {
+    tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-starter-'))
+    await renderTemplates('core', tmpDir, toTemplateData('stack-layout', DEFAULT_CONFIG))
+
+    const content = await readFile(path.join(tmpDir, 'app/_layout.tsx'), 'utf-8')
+    expect(content).toContain("import { Stack } from 'expo-router'")
+    expect(content).toContain('<Stack')
+    expect(content).toContain('name="index"')
+    expect(content).toContain('name="(onboarding)"')
+    expect(content).toContain('name="(app)"')
+    expect(content).not.toContain('Slot')
+    expect(content).not.toContain('RouteGuard')
+  })
+})
+
+describe('UI pack template rendering', () => {
+  let tmpDir: string
+
+  afterEach(async () => {
+    if (tmpDir) await rm(tmpDir, { recursive: true, force: true })
+  })
+
+  it('renders shared design system files', async () => {
+    tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-starter-'))
+    await renderTemplates('ui', tmpDir, toTemplateData('ui-shared', DEFAULT_CONFIG))
+
+    expect(await exists(path.join(tmpDir, 'src/design-system/tokens.ts'))).toBe(true)
+    expect(await exists(path.join(tmpDir, 'src/design-system/index.ts'))).toBe(true)
+    expect(await exists(path.join(tmpDir, 'src/design-system/elevation.ts'))).toBe(true)
+    expect(await exists(path.join(tmpDir, 'src/design-system/ThemeProvider.tsx'))).toBe(true)
+    expect(await exists(path.join(tmpDir, 'src/lib/storage.ts'))).toBe(true)
+  })
+
+  it('renders tamagui-specific templates', async () => {
+    tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-starter-'))
+    await renderTemplates('ui-tamagui', tmpDir, toTemplateData('tam-ui', { ...DEFAULT_CONFIG, ui: 'tamagui' }))
+
+    expect(await exists(path.join(tmpDir, 'tamagui.config.ts'))).toBe(true)
+    expect(await exists(path.join(tmpDir, 'src/providers/ui/tamagui/TamaguiProvider.tsx'))).toBe(true)
+    expect(await exists(path.join(tmpDir, 'src/providers/ui/tamagui/tamagui.config.ts'))).toBe(true)
+    expect(await exists(path.join(tmpDir, 'src/components/Card.tsx'))).toBe(true)
+    expect(await exists(path.join(tmpDir, 'src/components/PrimaryButton.tsx'))).toBe(true)
+    expect(await exists(path.join(tmpDir, 'src/components/StatusBanner.tsx'))).toBe(true)
+  })
+
+  it('renders gluestack-specific templates', async () => {
+    tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-starter-'))
+    await renderTemplates('ui-gluestack', tmpDir, toTemplateData('gs-ui', { ...DEFAULT_CONFIG, ui: 'gluestack' }))
+
+    expect(await exists(path.join(tmpDir, 'src/providers/ui/gluestack/GluestackProvider.tsx'))).toBe(true)
+    expect(await exists(path.join(tmpDir, 'src/providers/ui/gluestack/gluestack.config.ts'))).toBe(true)
+    expect(await exists(path.join(tmpDir, 'src/components/Card.tsx'))).toBe(true)
+    expect(await exists(path.join(tmpDir, 'src/components/PrimaryButton.tsx'))).toBe(true)
+    expect(await exists(path.join(tmpDir, 'src/components/StatusBanner.tsx'))).toBe(true)
+  })
+
+  it('tamagui Card component imports from tamagui directly', async () => {
+    tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-starter-'))
+    await renderTemplates('ui-tamagui', tmpDir, toTemplateData('tam-comp', { ...DEFAULT_CONFIG, ui: 'tamagui' }))
+
+    const content = await readFile(path.join(tmpDir, 'src/components/Card.tsx'), 'utf-8')
+    expect(content).toContain("from 'tamagui'")
+    expect(content).not.toContain('@gluestack-ui/themed')
+  })
+
+  it('gluestack Card component imports from gluestack directly', async () => {
+    tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-starter-'))
+    await renderTemplates('ui-gluestack', tmpDir, toTemplateData('gs-comp', { ...DEFAULT_CONFIG, ui: 'gluestack' }))
+
+    const content = await readFile(path.join(tmpDir, 'src/components/Card.tsx'), 'utf-8')
+    expect(content).toContain("from '@gluestack-ui/themed'")
+    expect(content).not.toContain("from 'tamagui'")
+  })
+
+  it('ThemeProvider conditionally imports TamaguiAdapter for tamagui', async () => {
+    tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-starter-'))
+    await renderTemplates('ui', tmpDir, toTemplateData('tam-tp', { ...DEFAULT_CONFIG, ui: 'tamagui' }))
+
+    const content = await readFile(path.join(tmpDir, 'src/design-system/ThemeProvider.tsx'), 'utf-8')
+    expect(content).toContain('TamaguiAdapter')
+    expect(content).not.toContain('GluestackAdapter')
+  })
+
+  it('ThemeProvider conditionally imports GluestackAdapter for gluestack', async () => {
+    tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-starter-'))
+    await renderTemplates('ui', tmpDir, toTemplateData('gs-tp', { ...DEFAULT_CONFIG, ui: 'gluestack' }))
+
+    const content = await readFile(path.join(tmpDir, 'src/design-system/ThemeProvider.tsx'), 'utf-8')
+    expect(content).toContain('GluestackAdapter')
+    expect(content).not.toContain('TamaguiAdapter')
+  })
+})
+
+describe('UI pack dependencies', () => {
+  it('includes tamagui deps when ui=tamagui', () => {
+    const packs = getActivePacks({ ...DEFAULT_CONFIG, ui: 'tamagui' })
+    const uiPack = packs.find((p) => p.id === 'ui')!
+    expect(uiPack.dependencies).toHaveProperty('tamagui')
+    expect(uiPack.dependencies).toHaveProperty('@tamagui/config')
+    expect(uiPack.dependencies).not.toHaveProperty('@gluestack-ui/themed')
+  })
+
+  it('includes gluestack deps when ui=gluestack', () => {
+    const packs = getActivePacks({ ...DEFAULT_CONFIG, ui: 'gluestack' })
+    const uiPack = packs.find((p) => p.id === 'ui')!
+    expect(uiPack.dependencies).toHaveProperty('@gluestack-ui/themed')
+    expect(uiPack.dependencies).toHaveProperty('@gluestack-style/react')
+    expect(uiPack.dependencies).not.toHaveProperty('tamagui')
+  })
+
+  it('includes tamagui devDependencies when ui=tamagui', () => {
+    const packs = getActivePacks({ ...DEFAULT_CONFIG, ui: 'tamagui' })
+    const uiPack = packs.find((p) => p.id === 'ui')!
+    expect(uiPack.devDependencies).toHaveProperty('@tamagui/babel-plugin')
+  })
+
+  it('merges UI pack deps into package.json', () => {
+    const packs = getActivePacks({ ...DEFAULT_CONFIG, ui: 'tamagui' })
+    const base = buildBasePackageJson('test-app')
+    const result = mergePackDependencies(base, packs)
+    expect(result.dependencies).toHaveProperty('tamagui')
   })
 })

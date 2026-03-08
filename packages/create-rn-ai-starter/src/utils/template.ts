@@ -13,6 +13,11 @@ export interface TemplateData {
   hasAuth: boolean
   hasPayments: boolean
   isFullDx: boolean
+  uiKit: {
+    lib: string
+    VStack: string
+    HStack: string
+  }
 }
 
 // In dev: import.meta.url is src/utils/template.ts → go up 3 levels

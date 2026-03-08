@@ -1,0 +1,36 @@
+import { <%= uiKit.VStack %>, Text } from '<%= uiKit.lib %>'
+import { useTokens } from '@/design-system'
+
+export default function ProfileScreen() {
+  const { colors, typography, spacing } = useTokens()
+
+  return (
+    <<%= uiKit.VStack %>
+      style={{
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: spacing.lg,
+      }}
+    >
+      <Text
+        style={{
+          fontSize: typography.heading.fontSize,
+          fontWeight: typography.heading.fontWeight,
+          color: colors.text,
+          marginBottom: spacing.sm,
+        }}
+      >
+        Profile
+      </Text>
+      <Text
+        style={{
+          fontSize: typography.bodyLarge.fontSize,
+          color: colors.textSubtle,
+        }}
+      >
+        Your profile details will go here.
+      </Text>
+    </<%= uiKit.VStack %>>
+  )
+}

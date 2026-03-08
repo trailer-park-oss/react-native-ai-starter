@@ -169,3 +169,71 @@ Prove:
 | Haptic feedback | expo-haptics | Native feel on interactions, simple API, Expo-managed | No haptics (less polished UX) |
 
 Be concrete. Every generated file must be valid TypeScript/TSX. Mark any integration point that depends on Prompts 3-5 with `// TODO: Prompt N`.
+
+---
+
+## Implementation Compliance Checklist
+
+Cross-referenced against `packages/create-rn-ai-starter/` on 2026-03-08.
+
+### UI Pack Source
+- [x] `src/packs/ui/index.ts` — `createUiPack(config)` factory replaces stub
+- [x] Conditional `dependencies` based on `ctx.config.ui` (tamagui vs gluestack)
+- [x] Conditional `devDependencies` (`@tamagui/babel-plugin` for tamagui only)
+- [x] `expoInstallPackages`: `react-native-reanimated`, `react-native-mmkv`, `expo-haptics`, `expo-linear-gradient`
+- [x] Calls `renderTemplates('ui', ...)` for shared templates
+- [x] Calls `renderTemplates('ui-tamagui', ...)` or `renderTemplates('ui-gluestack', ...)` conditionally
+- [x] `postApplyValidation` checks shared + library-specific + component files
+
+### Kit Pattern (Screen Templates)
+- [x] `src/packs/ui/kits.ts` defines `UIKit` interface and kit objects per library
+- [x] `TemplateData` extended with `uiKit` field
+- [x] Screen templates use `<%= uiKit.VStack %>`, `<%= uiKit.lib %>` — zero EJS if/else in screens
+- [x] Generated screens import directly from `'tamagui'` or `'@gluestack-ui/themed'`
+- [x] No abstraction layer in generated app code
+
+### Shared Templates (`templates/ui/`)
+- [x] `src/design-system/tokens.ts` — 19 color tokens, 7 spacing, 5 radius, 6 typography roles
+- [x] `src/design-system/tokens.ts` — 4 palette combos (neutral-green × light/dark, fluent-blue × light/dark)
+- [x] `src/design-system/ThemeProvider.tsx` — reads store, resolves tokens, Reanimated animated transitions
+- [x] `src/design-system/ThemeProvider.tsx` — conditional `TamaguiAdapter` or `GluestackAdapter` import (EJS)
+- [x] `src/design-system/elevation.ts` — card, modal, pressed, toast (iOS shadow + Android elevation)
+- [x] `src/design-system/index.ts` — barrel export (resolveTokens, useTokens, ThemeProvider, elevation)
+- [x] `src/lib/mmkv-storage.ts` — MMKV instance + Zustand `StateStorage` adapter
+- [x] `src/store/theme.ts` — Zustand `persist` middleware with MMKV, `preset` + `colorMode` + `system` mode
+
+### Tamagui Templates (`templates/ui-tamagui/`)
+- [x] `src/providers/ui/tamagui/tamagui.config.ts` — maps canonical tokens → Tamagui themes/tokens
+- [x] `src/providers/ui/tamagui/TamaguiProvider.tsx` — wraps `TamaguiProvider` with config + defaultTheme
+- [x] `tamagui.config.ts` (project root) — re-export for Tamagui babel plugin
+- [x] `src/components/Card.tsx` — uses `YStack`, `Text` from tamagui, Reanimated press animation, haptics
+- [x] `src/components/PrimaryButton.tsx` — uses `Text` from tamagui, Reanimated, haptics
+- [x] `src/components/StatusBanner.tsx` — uses `XStack`, `Text` from tamagui, variant color mapping
+
+### Gluestack Templates (`templates/ui-gluestack/`)
+- [x] `src/providers/ui/gluestack/gluestack.config.ts` — maps canonical tokens → Gluestack theme config
+- [x] `src/providers/ui/gluestack/GluestackProvider.tsx` — wraps `GluestackUIProvider` with config + colorMode
+- [x] `src/components/Card.tsx` — uses `Box`, `Text` from gluestack, Reanimated press animation, haptics
+- [x] `src/components/PrimaryButton.tsx` — uses `Text` from gluestack, Reanimated, haptics
+- [x] `src/components/StatusBanner.tsx` — uses `Box`, `Text` from gluestack, variant color mapping
+
+### Pack Invariants
+- [x] When `ui === 'tamagui'`: gluestack adapter files NOT generated, gluestack deps NOT installed
+- [x] When `ui === 'gluestack'`: tamagui adapter files NOT generated, tamagui deps NOT installed
+- [x] Shared design system files ALWAYS generated (tokens, ThemeProvider, elevation, mmkv)
+- [x] `react-native-reanimated`, `react-native-mmkv`, `expo-haptics`, `expo-linear-gradient` always in `expoInstallPackages`
+- [x] All 32 config combinations (ui × auth × payments × dx × preset) render without error
+
+### Test Coverage (175 tests total)
+- [x] All 32 config permutations produce all expected files
+- [x] Tamagui screens: import from `'tamagui'`, use `YStack`, no gluestack references
+- [x] Gluestack screens: import from `'@gluestack-ui/themed'`, use `VStack`, no tamagui references
+- [x] All screens use `useTokens()` from design system, zero `StyleSheet.create`
+- [x] Components import directly from the selected UI library
+- [x] ThemeProvider uses correct adapter per library
+- [x] No cross-contamination (tamagui files absent when gluestack, vice versa)
+- [x] Package.json includes correct deps per UI choice, excludes the other
+- [x] Auth axis: root layout auth routing present/absent, resolver wired/stubbed
+- [x] Payments axis: resolver wired/stubbed, pack included/excluded
+- [x] Preset axis: both presets interpolated correctly in config + theme store
+- [x] Cross-cutting: maximal, minimal, and mixed config combinations verified

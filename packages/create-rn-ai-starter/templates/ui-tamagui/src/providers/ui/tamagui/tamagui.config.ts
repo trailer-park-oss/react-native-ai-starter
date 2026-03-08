@@ -63,12 +63,14 @@ const tokens = createTokens({
     true: radius.md,
   },
   zIndex: {
-    0: 0,
-    1: 100,
-    2: 200,
-    3: 300,
-    4: 400,
-    5: 500,
+    xs: 0,
+    sm: 100,
+    md: 200,
+    lg: 300,
+    xl: 400,
+    '2xl': 500,
+    '3xl': 600,
+    true: 200,
   },
 })
 

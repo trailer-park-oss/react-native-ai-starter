@@ -1,0 +1,45 @@
+import { <%= uiKit.VStack %>, Text } from '<%= uiKit.lib %>'
+import { useRouter } from 'expo-router'
+import { useTokens } from '@/design-system'
+import { PrimaryButton } from '@/components/PrimaryButton'
+
+export default function FeaturesScreen() {
+  const router = useRouter()
+  const { colors, typography, spacing } = useTokens()
+
+  return (
+    <<%= uiKit.VStack %>
+      style={{
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: spacing.lg,
+      }}
+    >
+      <Text
+        style={{
+          fontSize: typography.headingLarge.fontSize,
+          fontWeight: typography.headingLarge.fontWeight,
+          color: colors.text,
+          marginBottom: spacing.sm,
+        }}
+      >
+        Features
+      </Text>
+      <Text
+        style={{
+          fontSize: typography.bodyLarge.fontSize,
+          color: colors.textSubtle,
+          textAlign: 'center',
+          marginBottom: spacing.xl,
+        }}
+      >
+        Built with Expo Router, Zustand, and TanStack Query.
+      </Text>
+      <PrimaryButton
+        label="Next"
+        onPress={() => router.push('/(onboarding)/get-started')}
+      />
+    </<%= uiKit.VStack %>>
+  )
+}

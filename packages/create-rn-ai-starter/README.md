@@ -78,44 +78,75 @@ npx create-rn-ai-starter . --yes
 The CLI creates a new Expo project with:
 
 - **Core** — Expo Router file-based routing, onboarding flow (3 screens), tab navigation (Home, Profile, Settings), Zustand stores, React Query setup, provider resolvers, and a `starter.config.ts` manifest.
-- **UI** — Design system and theme tokens for the selected UI library.
+- **UI** — Full design system with canonical tokens (colors, spacing, radius, typography), `ThemeProvider` with animated transitions, MMKV-persisted theme store, and library-specific components (Card, PrimaryButton, StatusBanner). Screens import directly from the selected UI library via the kit pattern — `tamagui` or `@gluestack-ui/themed`.
 - **Auth** — Auth provider wiring and `(auth)` route group (when not `none`).
 - **Payments** — Payments provider wiring (when not `none`).
 - **DX** — Developer experience profile (linting, formatting, TypeScript strictness).
 
 After scaffolding, the CLI installs dependencies and runs validation checks to make sure everything is wired correctly.
 
+### UI library selection
+
+Screens use the selected library's components directly — no abstraction layer:
+
+- `--ui tamagui` → screens import `YStack`, `Text` from `'tamagui'`
+- `--ui gluestack` → screens import `VStack`, `Text` from `'@gluestack-ui/themed'`
+
+This is powered by a **kit pattern** in the CLI templates: a plain object maps component names and import paths per library, so screen templates are written once with EJS variables and produce clean, idiomatic output for each library.
+
+### Theme presets
+
+Both presets include light and dark mode palettes:
+
+- `--preset neutral-green` — gray scale + green accent (#22C55E)
+- `--preset fluent-blue` — Fluent-style blues (#0078D4)
+
+Theme selection persists across app restarts via MMKV + Zustand persist middleware.
+
 ## Generated Project Structure
 
 ```
 my-app/
 ├── app/
-│   ├── _layout.tsx              # Root layout with providers
+│   ├── _layout.tsx              # Root layout — SafeAreaProvider, QueryClient, ThemeProvider
 │   ├── index.tsx                # Entry redirect (splash handling)
 │   ├── (onboarding)/
 │   │   ├── _layout.tsx          # Stack navigator
-│   │   ├── welcome.tsx
+│   │   ├── welcome.tsx          # Uses YStack/VStack + design tokens
 │   │   ├── features.tsx
 │   │   └── get-started.tsx
 │   ├── (app)/
-│   │   ├── _layout.tsx          # Tab navigator
-│   │   ├── index.tsx            # Home
+│   │   ├── _layout.tsx          # Tab navigator (Home, Profile, Settings)
+│   │   ├── index.tsx
 │   │   ├── profile.tsx
 │   │   └── settings.tsx
 │   └── (auth)/                  # (generated when auth ≠ none)
 │       └── _layout.tsx
 ├── src/
 │   ├── starter.config.ts        # Selected providers & modes
+│   ├── design-system/
+│   │   ├── index.ts             # Barrel export (resolveTokens, useTokens, ThemeProvider, elevation)
+│   │   ├── tokens.ts            # Canonical tokens — colors, spacing, radius, typography
+│   │   ├── ThemeProvider.tsx     # Reads store, resolves tokens, animated theme transitions
+│   │   └── elevation.ts         # Platform-aware card/modal/toast shadows
+│   ├── components/
+│   │   ├── Card.tsx             # Animated card with haptics — uses tamagui or gluestack directly
+│   │   ├── PrimaryButton.tsx    # Animated button with haptics
+│   │   └── StatusBanner.tsx     # Success/warning/critical/info banners
 │   ├── store/
 │   │   ├── index.ts             # Barrel export
 │   │   ├── onboarding.ts        # Zustand — onboarding state
-│   │   └── theme.ts             # Zustand — theme preset
+│   │   └── theme.ts             # Zustand + MMKV persist — preset & colorMode
 │   ├── lib/
-│   │   └── query-client.ts      # TanStack Query client
+│   │   ├── query-client.ts      # TanStack Query client
+│   │   └── mmkv-storage.ts      # MMKV instance + Zustand StateStorage adapter
 │   └── providers/
-│       ├── ui/index.ts           # Resolver — tamagui or gluestack
+│       ├── ui/
+│       │   ├── index.ts          # Resolver — tamagui or gluestack
+│       │   └── tamagui/          # (or gluestack/) — library-specific config & provider
 │       ├── auth/index.ts         # Resolver — clerk or no-op stub
 │       └── payments/index.ts     # Resolver — stripe or no-op stub
+├── tamagui.config.ts             # (only when --ui tamagui)
 ├── app.json
 ├── tsconfig.json                 # strict, noUncheckedIndexedAccess, @/* alias
 └── package.json

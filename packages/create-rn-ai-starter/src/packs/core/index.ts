@@ -2,6 +2,7 @@ import type { FeaturePack, ValidationResult } from '@/packs/pack.interface.js'
 import type { PackContext } from '@/types.js'
 import { renderTemplates, type TemplateData } from '@/utils/template.js'
 import { fileExists } from '@/utils/fs.js'
+import { getUIKit } from '@/packs/ui/kits.js'
 
 function buildTemplateData(ctx: PackContext): TemplateData {
   return {
@@ -14,6 +15,7 @@ function buildTemplateData(ctx: PackContext): TemplateData {
     hasAuth: ctx.config.auth !== 'none',
     hasPayments: ctx.config.payments !== 'none',
     isFullDx: ctx.config.dx === 'full',
+    uiKit: getUIKit(ctx.config.ui),
   }
 }
 
@@ -26,6 +28,7 @@ async function validateCore(ctx: PackContext): Promise<ValidationResult> {
   const checks = await Promise.all([
     check('starter.config.ts exists', () => fileExists(ctx.projectDir, 'src/starter.config.ts')),
     check('tsconfig.json exists', () => fileExists(ctx.projectDir, 'tsconfig.json')),
+    check('babel.config.js exists', () => fileExists(ctx.projectDir, 'babel.config.js')),
     check('app.json exists', () => fileExists(ctx.projectDir, 'app.json')),
     check('Root layout exists', () => fileExists(ctx.projectDir, 'app/_layout.tsx')),
     check('Entry screen exists', () => fileExists(ctx.projectDir, 'app/index.tsx')),
@@ -84,6 +87,7 @@ export const corePack: FeaturePack = {
   ownedPaths: [
     'src/starter.config.ts',
     'tsconfig.json',
+    'babel.config.js',
     'app.json',
     'app/_layout.tsx',
     'app/index.tsx',

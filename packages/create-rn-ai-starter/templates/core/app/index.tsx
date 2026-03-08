@@ -4,9 +4,7 @@ import { useOnboardingStore } from '@/store/onboarding'
 export default function EntryScreen() {
   const { hasCompletedOnboarding } = useOnboardingStore()
 
-  if (!hasCompletedOnboarding) {
-    return <Redirect href="/(onboarding)/welcome" />
-  }
-
-  return <Redirect href="/(app)" />
+  return (
+    <Redirect href={hasCompletedOnboarding ? '/(app)' : '/(onboarding)/welcome'} />
+  )
 }

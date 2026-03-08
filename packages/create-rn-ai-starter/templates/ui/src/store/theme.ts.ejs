@@ -1,6 +1,6 @@
 import { create } from 'zustand'
-import { persist, createJSONStorage } from 'zustand/middleware'
-import { zustandMmkvStorage } from '@/lib/mmkv-storage'
+import { persist } from 'zustand/middleware'
+import { zustandStorage } from '@/lib/storage'
 import type { ThemePreset } from '@/starter.config'
 
 type ColorMode = 'light' | 'dark' | 'system'
@@ -22,7 +22,7 @@ export const useThemeStore = create<ThemeState>()(
     }),
     {
       name: 'theme-store',
-      storage: createJSONStorage(() => zustandMmkvStorage),
+      storage: zustandStorage,
     },
   ),
 )

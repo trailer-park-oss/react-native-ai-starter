@@ -125,11 +125,11 @@ Be concrete. Every file must contain valid TypeScript/TSX or a clear TODO marker
 
 ## Implementation Compliance Checklist
 
-Cross-referenced against `packages/create-rn-ai-starter/` on 2026-03-08.
+Cross-referenced against `packages/create-rn-ai-starter/` on 2026-03-08. Updated 2026-03-08.
 
 ### CLI Scope
-- [x] CLI creates new projects only (`validateProjectName` rejects existing directories)
-- [x] Command shape: `create-rn-ai-starter <project-name>`
+- [x] CLI creates new projects only (`resolveProjectPath` rejects existing directories)
+- [x] Command shape: `create-rn-ai-starter <project-path>` (accepts name, relative path, absolute path, or `.`)
 - [x] Flag `--ui tamagui|gluestack`
 - [x] Flag `--auth clerk|none`
 - [x] Flag `--payments stripe|none`
@@ -142,7 +142,7 @@ Cross-referenced against `packages/create-rn-ai-starter/` on 2026-03-08.
 ### Project Structure & Routing
 - [x] Expo SDK (latest stable ~55) with Expo Router
 - [x] Root-level `app/` directory for Expo Router
-- [x] Non-router source code under `src/` (store, lib, providers)
+- [x] Non-router source code under `src/` (store, lib, providers, design-system, components)
 - [x] Route group `(onboarding)` — always generated
 - [x] Route group `(app)` — always generated
 - [x] Route group `(auth)` — generated only when auth pack enabled (owned by auth pack)
@@ -152,16 +152,18 @@ Cross-referenced against `packages/create-rn-ai-starter/` on 2026-03-08.
 
 ### State Management
 - [x] Zustand for client state (`src/store/onboarding.ts`, `src/store/theme.ts`)
+- [x] Zustand persist with MMKV for theme store (survives app restarts)
 - [x] TanStack Query for server/async state (`src/lib/query-client.ts`)
 - [x] Clear responsibilities — stores for UI/client state, query client for server cache
 
 ### Feature-Pack Plugin System
 - [x] Pack registry with deterministic order: core → ui → auth → payments → dx
-- [x] Pack contract: `dependencies` field
-- [x] Pack contract: `devDependencies` field
+- [x] Pack contract: `dependencies` field (conditional per config)
+- [x] Pack contract: `devDependencies` field (conditional per config)
 - [x] Pack contract: `generate()` (files/templates)
 - [x] Pack contract: `postApplyValidation()`
 - [x] Ownership boundaries via `ownedPaths` per pack
+- [x] UI pack uses `createUiPack(config)` factory for conditional deps/templates
 
 ### Provider Selection Mechanism
 - [x] `starter.config.ts` controls selected providers and modes
@@ -176,7 +178,7 @@ Cross-referenced against `packages/create-rn-ai-starter/` on 2026-03-08.
 - [x] `noUncheckedIndexedAccess: true` in generated tsconfig.json
 - [x] Path alias `@/* → src/*` in generated tsconfig.json
 - [x] All template outputs produce valid TypeScript/TSX
-- [x] Stub packs use TODO markers tied to Prompts 2-5
+- [x] Stub packs use TODO markers tied to Prompts 3-5
 
 ### Required `starter.config.ts` Shape
 - [x] Type `UiProvider = 'tamagui' | 'gluestack'`
@@ -189,7 +191,7 @@ Cross-referenced against `packages/create-rn-ai-starter/` on 2026-03-08.
 
 ### Generator Lifecycle
 - [x] Step 1: Parse arguments (Commander)
-- [x] Step 2: Validate project name (regex + no existing dir)
+- [x] Step 2: Resolve project path (name, relative, absolute, or `.`)
 - [x] Step 3: Prompt for missing options (or `--yes` for defaults)
 - [x] Step 4: Validate config (all values in allowed set)
 - [x] Step 5: Create project directory
@@ -198,3 +200,10 @@ Cross-referenced against `packages/create-rn-ai-starter/` on 2026-03-08.
 - [x] Step 8: Install dependencies (npm install + npx expo install)
 - [x] Step 9: Run post-apply validations
 - [x] Step 10: Print summary with next steps
+
+### Prompt Status
+- [x] Prompt 1 — CLI Core Architecture & Generator Scaffold — **COMPLETE**
+- [x] Prompt 2 — UI Pack: Design System, Tokens & Library Adapters — **COMPLETE**
+- [ ] Prompt 3 — Auth Provider — TODO
+- [ ] Prompt 4 — Payments Provider — TODO
+- [ ] Prompt 5 — DX, Testing & CI — TODO

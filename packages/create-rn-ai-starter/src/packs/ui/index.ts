@@ -2,6 +2,7 @@ import type { FeaturePack, ValidationCheck } from '@/packs/pack.interface.js'
 import type { PackContext, StarterConfig } from '@/types.js'
 import { renderTemplates, type TemplateData } from '@/utils/template.js'
 import { fileExists } from '@/utils/fs.js'
+import { getUIKit } from '@/packs/ui/kits.js'
 
 function buildTemplateData(ctx: PackContext): TemplateData {
   return {
@@ -14,6 +15,7 @@ function buildTemplateData(ctx: PackContext): TemplateData {
     hasAuth: ctx.config.auth !== 'none',
     hasPayments: ctx.config.payments !== 'none',
     isFullDx: ctx.config.dx === 'full',
+    uiKit: getUIKit(ctx.config.ui),
   }
 }
 
@@ -48,7 +50,7 @@ export function createUiPack(config: StarterConfig): FeaturePack {
     devDependencies,
     expoInstallPackages: [
       'react-native-reanimated',
-      'react-native-mmkv',
+      '@react-native-async-storage/async-storage',
       'expo-haptics',
       'expo-linear-gradient',
     ],
@@ -83,8 +85,8 @@ export function createUiPack(config: StarterConfig): FeaturePack {
           fileExists(ctx.projectDir, 'src/design-system/elevation.ts')),
         check('Design system barrel export exists', () =>
           fileExists(ctx.projectDir, 'src/design-system/index.ts')),
-        check('MMKV storage adapter exists', () =>
-          fileExists(ctx.projectDir, 'src/lib/mmkv-storage.ts')),
+        check('Storage adapter exists', () =>
+          fileExists(ctx.projectDir, 'src/lib/storage.ts')),
         check('Persisted theme store exists', () =>
           fileExists(ctx.projectDir, 'src/store/theme.ts')),
       ]
