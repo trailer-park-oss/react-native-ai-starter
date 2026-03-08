@@ -120,7 +120,7 @@ const UI_OPTIONS: UiProvider[] = ['tamagui', 'gluestack']
 const AUTH_OPTIONS: AuthProvider[] = ['clerk', 'none']
 const PAYMENTS_OPTIONS: PaymentsProvider[] = ['stripe', 'none']
 const DX_OPTIONS: DxProfile[] = ['basic', 'full']
-const PRESET_OPTIONS: ThemePreset[] = ['neutral-green', 'fluent-blue']
+const PRESET_OPTIONS: ThemePreset[] = ['radix-blue', 'radix-green', 'radix-purple', 'radix-orange', 'radix-cyan', 'radix-red']
 
 describe('full pipeline — every config combination renders without error', () => {
   let tmpDir: string
@@ -454,7 +454,7 @@ describe('payments axis — none', () => {
   })
 })
 
-// ─── Preset axis: neutral-green vs fluent-blue ──────────────────────────────
+// ─── Preset axis: Radix presets ────────────────────────────────────────────
 
 describe('preset axis', () => {
   let tmpDir: string
@@ -521,7 +521,7 @@ describe('cross-cutting — maximal config (all features enabled)', () => {
     auth: 'clerk',
     payments: 'stripe',
     dx: 'full',
-    preset: 'fluent-blue',
+    preset: 'radix-blue',
   }
 
   afterEach(async () => {
@@ -542,7 +542,7 @@ describe('cross-cutting — maximal config (all features enabled)', () => {
     expect(starterConfig).toContain("auth: 'clerk'")
     expect(starterConfig).toContain("payments: 'stripe'")
     expect(starterConfig).toContain("dx: 'full'")
-    expect(starterConfig).toContain("preset: 'fluent-blue'")
+    expect(starterConfig).toContain("preset: 'radix-blue'")
 
     const layout = await readFile(path.join(tmpDir, 'app/_layout.tsx'), 'utf-8')
     expect(layout).toContain('(auth)')
@@ -577,7 +577,7 @@ describe('cross-cutting — minimal config (all optional features disabled)', ()
     auth: 'none',
     payments: 'none',
     dx: 'basic',
-    preset: 'neutral-green',
+    preset: 'radix-green',
   }
 
   afterEach(async () => {
@@ -611,7 +611,7 @@ describe('cross-cutting — gluestack + clerk + stripe', () => {
     auth: 'clerk',
     payments: 'stripe',
     dx: 'full',
-    preset: 'neutral-green',
+    preset: 'radix-green',
   }
 
   afterEach(async () => {
@@ -659,13 +659,13 @@ describe('design system tokens', () => {
     if (tmpDir) await rm(tmpDir, { recursive: true, force: true })
   })
 
-  it('tokens.ts exports both preset palettes', async () => {
+  it('tokens.ts exports all preset palettes', async () => {
     tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-tokens-'))
     await renderFullProject(tmpDir, DEFAULT_CONFIG)
 
     const content = await readFile(path.join(tmpDir, 'src/design-system/tokens.ts'), 'utf-8')
-    expect(content).toContain('neutral-green')
-    expect(content).toContain('fluent-blue')
+    expect(content).toContain('radix-blue')
+    expect(content).toContain('radix-green')
     expect(content).toContain('light')
     expect(content).toContain('dark')
     expect(content).toContain('resolveTokens')
@@ -918,7 +918,7 @@ describe('import resolution — every dynamic import() target resolves to an exi
 
         it(`all resolver imports resolve: ${label}`, async () => {
           tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-resolve-'))
-          const config: StarterConfig = { ui, auth, payments, dx: 'basic', preset: 'neutral-green' }
+          const config: StarterConfig = { ui, auth, payments, dx: 'basic', preset: 'radix-green' }
           await renderFullProject(tmpDir, config)
 
           for (const resolverFile of RESOLVER_FILES) {
@@ -961,7 +961,7 @@ describe('import resolution — screen @/ imports resolve to existing modules', 
 
       it(`all screen @/ imports resolve: ${label}`, async () => {
         tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-screen-resolve-'))
-        const config: StarterConfig = { ui, auth, payments: 'none', dx: 'basic', preset: 'neutral-green' }
+        const config: StarterConfig = { ui, auth, payments: 'none', dx: 'basic', preset: 'radix-green' }
         await renderFullProject(tmpDir, config)
 
         const screenFiles = [

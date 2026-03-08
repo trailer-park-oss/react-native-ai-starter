@@ -37,7 +37,7 @@ npx create-rn-ai-starter .                        # scaffolds in cwd (must be em
 | `--auth <provider>` | `clerk` \| `none` | `none` |
 | `--payments <provider>` | `stripe` \| `none` | `none` |
 | `--dx <profile>` | `basic` \| `full` | `basic` |
-| `--preset <theme>` | `neutral-green` \| `fluent-blue` | `neutral-green` |
+| `--preset <theme>` | `radix-blue` \| `radix-green` \| `radix-purple` \| `radix-orange` \| `radix-cyan` \| `radix-red` | `radix-blue` |
 | `--yes` | — | Skip prompts, use defaults for unset flags |
 
 ### Examples
@@ -96,12 +96,16 @@ This is powered by a **kit pattern** in the CLI templates: a plain object maps c
 
 ### Theme presets
 
-Both presets include light and dark mode palettes:
+All Radix-based presets include light and dark mode palettes:
 
-- `--preset neutral-green` — gray scale + green accent (#22C55E)
-- `--preset fluent-blue` — Fluent-style blues (#0078D4)
+- `--preset radix-blue` — Blue accent palette
+- `--preset radix-green` — Green accent palette
+- `--preset radix-purple` — Purple accent palette
+- `--preset radix-orange` — Orange accent palette
+- `--preset radix-cyan` — Cyan accent palette
+- `--preset radix-red` — Red accent palette
 
-Theme selection persists across app restarts via MMKV + Zustand persist middleware.
+Theme selection persists across app restarts via Zustand persist middleware.
 
 ## Generated Project Structure
 

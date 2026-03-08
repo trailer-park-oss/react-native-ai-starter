@@ -47,7 +47,7 @@ describe('getActivePacks', () => {
       auth: 'clerk',
       payments: 'stripe',
       dx: 'full',
-      preset: 'neutral-green',
+      preset: 'radix-green',
     }
     const packs = getActivePacks(config)
     const ids = packs.map((p) => p.id)
@@ -70,7 +70,7 @@ describe('pack ownership boundaries', () => {
       auth: 'clerk',
       payments: 'stripe',
       dx: 'full',
-      preset: 'neutral-green',
+      preset: 'radix-green',
     }
     const packs = getActivePacks(allConfig)
     const seen = new Map<string, string>()
@@ -96,7 +96,7 @@ describe('pack ownership boundaries', () => {
       auth: 'clerk',
       payments: 'stripe',
       dx: 'full',
-      preset: 'neutral-green',
+      preset: 'radix-green',
     }
     const packs = getActivePacks(allConfig)
     const ids = packs.map((p) => p.id)
@@ -111,7 +111,7 @@ describe('pack ownership boundaries', () => {
       auth: 'clerk',
       payments: 'stripe',
       dx: 'full',
-      preset: 'neutral-green',
+      preset: 'radix-green',
     }
     const packs = getActivePacks(allConfig)
 

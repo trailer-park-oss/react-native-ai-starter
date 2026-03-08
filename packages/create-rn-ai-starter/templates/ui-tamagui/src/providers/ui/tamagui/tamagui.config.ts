@@ -3,9 +3,14 @@ import { createAnimations } from '@tamagui/animations-react-native'
 import { createInterFont } from '@tamagui/font-inter'
 import {
   colorPalettes,
+  accentScales,
   spacing,
   radius,
   typography,
+  type ThemePreset,
+  type ColorMode,
+  type ColorTokens,
+  type RadixScale,
 } from '@/design-system/tokens'
 
 const animations = createAnimations({
@@ -46,9 +51,61 @@ const bodyFont = createInterFont({
   },
 })
 
+function scaleToNumbered(scale: RadixScale, prefix: string): Record<string, string> {
+  const entries = Object.values(scale)
+  const result: Record<string, string> = {}
+  for (let i = 0; i < entries.length; i++) {
+    result[`${prefix}${i + 1}`] = entries[i]
+  }
+  return result
+}
+
+function buildTamaguiTheme(
+  semantic: ColorTokens,
+  accentScale: RadixScale,
+  prefix: string,
+): Record<string, string> {
+  return {
+    ...semantic,
+    ...scaleToNumbered(accentScale, prefix),
+  }
+}
+
+const presets: ThemePreset[] = [
+  'radix-blue',
+  'radix-green',
+  'radix-purple',
+  'radix-orange',
+  'radix-cyan',
+  'radix-red',
+]
+const modes: ColorMode[] = ['light', 'dark']
+
+const prefixMap: Record<ThemePreset, string> = {
+  'radix-blue': 'blue',
+  'radix-green': 'green',
+  'radix-purple': 'purple',
+  'radix-orange': 'orange',
+  'radix-cyan': 'cyan',
+  'radix-red': 'red',
+}
+
+const themes: Record<string, Record<string, string>> = {}
+for (const preset of presets) {
+  for (const mode of modes) {
+    const key = `${preset}-${mode}`
+    themes[key] = buildTamaguiTheme(
+      colorPalettes[preset][mode],
+      accentScales[preset][mode],
+      prefixMap[preset],
+    )
+  }
+}
+
+const defaultSemantic = colorPalettes['radix-blue'].light
 const tokens = createTokens({
   color: {
-    ...colorPalettes['neutral-green'].light,
+    ...defaultSemantic,
   },
   space: {
     ...spacing,
@@ -81,12 +138,7 @@ export const tamaguiConfig = createTamagui({
     heading: headingFont,
     body: bodyFont,
   },
-  themes: {
-    'neutral-green-light': colorPalettes['neutral-green'].light,
-    'neutral-green-dark': colorPalettes['neutral-green'].dark,
-    'fluent-blue-light': colorPalettes['fluent-blue'].light,
-    'fluent-blue-dark': colorPalettes['fluent-blue'].dark,
-  },
+  themes,
 })
 
 export type AppConfig = typeof tamaguiConfig

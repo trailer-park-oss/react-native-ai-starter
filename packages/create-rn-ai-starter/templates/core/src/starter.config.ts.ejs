@@ -2,7 +2,13 @@ export type UiProvider = 'tamagui' | 'gluestack'
 export type AuthProvider = 'clerk' | 'none'
 export type PaymentsProvider = 'stripe' | 'none'
 export type DxProfile = 'basic' | 'full'
-export type ThemePreset = 'neutral-green' | 'fluent-blue'
+export type ThemePreset =
+  | 'radix-blue'
+  | 'radix-green'
+  | 'radix-purple'
+  | 'radix-orange'
+  | 'radix-cyan'
+  | 'radix-red'
 
 export interface StarterConfig {
   ui: UiProvider

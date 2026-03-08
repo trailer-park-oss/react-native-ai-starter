@@ -12,7 +12,7 @@ export const ALLOWED_VALUES = {
   auth: ['clerk', 'none'] as readonly AuthProvider[],
   payments: ['stripe', 'none'] as readonly PaymentsProvider[],
   dx: ['basic', 'full'] as readonly DxProfile[],
-  preset: ['neutral-green', 'fluent-blue'] as readonly ThemePreset[],
+  preset: ['radix-blue', 'radix-green', 'radix-purple', 'radix-orange', 'radix-cyan', 'radix-red'] as readonly ThemePreset[],
 } as const
 
 export const DEFAULT_CONFIG: StarterConfig = {
@@ -20,5 +20,5 @@ export const DEFAULT_CONFIG: StarterConfig = {
   auth: 'none',
   payments: 'none',
   dx: 'basic',
-  preset: 'neutral-green',
+  preset: 'radix-blue',
 }

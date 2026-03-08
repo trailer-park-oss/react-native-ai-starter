@@ -35,7 +35,7 @@ export const gluestackConfig = createConfig({
   } as const,
   tokens: {
     colors: {
-      ...colorPalettes['neutral-green'].light,
+      ...colorPalettes['radix-blue'].light,
       ...flattenColorTokens(colorPalettes),
     },
     space: {

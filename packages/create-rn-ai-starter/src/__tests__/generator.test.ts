@@ -38,7 +38,7 @@ const ALL_CONFIG: StarterConfig = {
   auth: 'clerk',
   payments: 'stripe',
   dx: 'full',
-  preset: 'fluent-blue',
+  preset: 'radix-blue',
 }
 
 describe('generator — template rendering', () => {
@@ -88,7 +88,7 @@ describe('generator — template rendering', () => {
     expect(content).toContain("auth: 'clerk'")
     expect(content).toContain("payments: 'stripe'")
     expect(content).toContain("dx: 'full'")
-    expect(content).toContain("preset: 'fluent-blue'")
+    expect(content).toContain("preset: 'radix-blue'")
   })
 
   it('starter.config.ts includes all required type definitions', async () => {
@@ -102,7 +102,10 @@ describe('generator — template rendering', () => {
     expect(content).toContain("export type AuthProvider = 'clerk' | 'none'")
     expect(content).toContain("export type PaymentsProvider = 'stripe' | 'none'")
     expect(content).toContain("export type DxProfile = 'basic' | 'full'")
-    expect(content).toContain("export type ThemePreset = 'neutral-green' | 'fluent-blue'")
+    expect(content).toContain('export type ThemePreset')
+    for (const p of ['radix-blue', 'radix-green', 'radix-purple', 'radix-orange', 'radix-cyan', 'radix-red']) {
+      expect(content).toContain(`'${p}'`)
+    }
     expect(content).toContain('export interface StarterConfig')
     expect(content).toContain('export const starterConfig: StarterConfig')
   })
@@ -129,22 +132,22 @@ describe('generator — template rendering', () => {
 
   it('sets correct theme preset in store', async () => {
     tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-starter-'))
-    const data = toTemplateData('theme-app', { ...DEFAULT_CONFIG, preset: 'fluent-blue' })
+    const data = toTemplateData('theme-app', { ...DEFAULT_CONFIG, preset: 'radix-blue' })
 
     await renderTemplates('core', tmpDir, data)
 
     const content = await readFile(path.join(tmpDir, 'src/store/theme.ts'), 'utf-8')
-    expect(content).toContain("preset: 'fluent-blue'")
+    expect(content).toContain("preset: 'radix-blue'")
   })
 
-  it('sets neutral-green as default theme preset', async () => {
+  it('sets radix-blue as default theme preset', async () => {
     tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-starter-'))
     const data = toTemplateData('default-theme', DEFAULT_CONFIG)
 
     await renderTemplates('core', tmpDir, data)
 
     const content = await readFile(path.join(tmpDir, 'src/store/theme.ts'), 'utf-8')
-    expect(content).toContain("preset: 'neutral-green'")
+    expect(content).toContain("preset: 'radix-blue'")
   })
 })
 
@@ -331,12 +334,12 @@ describe('store generation', () => {
 
   it('theme store uses zustand create with preset', async () => {
     tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-starter-'))
-    await renderTemplates('core', tmpDir, toTemplateData('store-app', { ...DEFAULT_CONFIG, preset: 'fluent-blue' }))
+    await renderTemplates('core', tmpDir, toTemplateData('store-app', { ...DEFAULT_CONFIG, preset: 'radix-blue' }))
 
     const content = await readFile(path.join(tmpDir, 'src/store/theme.ts'), 'utf-8')
     expect(content).toContain("import { create } from 'zustand'")
     expect(content).toContain('useThemeStore')
-    expect(content).toContain("preset: 'fluent-blue'")
+    expect(content).toContain("preset: 'radix-blue'")
     expect(content).toContain('setPreset')
   })
 

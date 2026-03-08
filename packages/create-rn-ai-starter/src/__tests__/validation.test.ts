@@ -17,7 +17,7 @@ describe('validateConfig', () => {
       auth: 'clerk',
       payments: 'stripe',
       dx: 'full',
-      preset: 'fluent-blue',
+      preset: 'radix-blue',
     }
     expect(() => validateConfig(config)).not.toThrow()
   })
