@@ -1,36 +1,278 @@
-import { <%= uiKit.VStack %>, Text } from '<%= uiKit.lib %>'
+import { useState, useRef } from 'react'
+import { <%= uiKit.VStack %>, <%= uiKit.HStack %>, Text } from '<%= uiKit.lib %>'
+import {
+  TextInput,
+  FlatList,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native'
+import * as ImagePicker from 'expo-image-picker'
 import { useTokens } from '@/design-system'
+import { useAiChat, AiChatProvider } from '@/providers/ai'
+import type { ChatMessage } from '@/providers/ai/ai.interface'
 
-export default function HomeScreen() {
-  const { colors, typography, spacing } = useTokens()
+function MessageBubble({
+  message,
+  colors,
+  typography,
+  spacing,
+  radius,
+}: {
+  message: ChatMessage
+  colors: ReturnType<typeof useTokens>['colors']
+  typography: ReturnType<typeof useTokens>['typography']
+  spacing: ReturnType<typeof useTokens>['spacing']
+  radius: ReturnType<typeof useTokens>['radius']
+}) {
+  const isUser = message.role === 'user'
 
   return (
     <<%= uiKit.VStack %>
       style={{
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: spacing.lg,
+        alignSelf: isUser ? 'flex-end' : 'flex-start',
+        maxWidth: '80%',
+        backgroundColor: isUser ? colors.primary : colors.surfaceRaised,
+        paddingHorizontal: spacing.md,
+        paddingVertical: spacing.sm + 2,
+        borderRadius: radius.xl,
+        ...(isUser
+          ? { borderBottomRightRadius: radius.sm }
+          : { borderBottomLeftRadius: radius.sm }),
+        marginVertical: spacing.xs / 2,
       }}
     >
+      {message.imageUri && (
+        <Image
+          source={{ uri: message.imageUri }}
+          style={{
+            width: 200,
+            height: 200,
+            borderRadius: radius.md,
+            marginBottom: spacing.xs,
+          }}
+          resizeMode="cover"
+        />
+      )}
       <Text
         style={{
-          fontSize: typography.heading.fontSize,
-          fontWeight: typography.heading.fontWeight,
-          color: colors.text,
-          marginBottom: spacing.sm,
+          color: isUser ? colors.textOnPrimary : colors.text,
+          fontSize: typography.body.fontSize,
+          lineHeight: typography.body.lineHeight,
         }}
       >
-        Home
-      </Text>
-      <Text
-        style={{
-          fontSize: typography.bodyLarge.fontSize,
-          color: colors.textSubtle,
-        }}
-      >
-        Start building your app here.
+        {message.content || '...'}
       </Text>
     </<%= uiKit.VStack %>>
+  )
+}
+
+function ChatContent() {
+  const { colors, typography, spacing, radius } = useTokens()
+  const { messages, isLoading, error, sendMessage, clearMessages, capabilities } = useAiChat()
+  const [input, setInput] = useState('')
+  const flatListRef = useRef<FlatList>(null)
+
+  const handleSend = async () => {
+    if (!input.trim()) return
+    const text = input
+    setInput('')
+    await sendMessage(text)
+  }
+
+  const handlePickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.8,
+    })
+    if (!result.canceled && result.assets[0]) {
+      await sendMessage('Analyze this image', result.assets[0].uri)
+    }
+  }
+
+  const handleTakePhoto = async () => {
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ['images'],
+      quality: 0.8,
+    })
+    if (!result.canceled && result.assets[0]) {
+      await sendMessage('Analyze this image', result.assets[0].uri)
+    }
+  }
+
+  return (
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: colors.background }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={100}
+    >
+      {messages.length === 0 ? (
+        <<%= uiKit.VStack %>
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            paddingHorizontal: spacing.xl,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: typography.headingLarge.fontSize,
+              fontWeight: typography.headingLarge.fontWeight,
+              color: colors.text,
+              marginBottom: spacing.sm,
+            }}
+          >
+<% if (ai === 'online-openrouter') { -%>
+            AI Chat
+<% } else { -%>
+            Vision AI
+<% } -%>
+          </Text>
+          <Text
+            style={{
+              fontSize: typography.body.fontSize,
+              color: colors.textSubtle,
+              textAlign: 'center',
+              lineHeight: typography.bodyLarge.lineHeight,
+            }}
+          >
+<% if (ai === 'online-openrouter') { -%>
+            Powered by OpenRouter. Send a message to start chatting.
+<% } else { -%>
+            Powered by ML Kit. Send a photo and I'll tell you what I see.
+<% } -%>
+          </Text>
+        </<%= uiKit.VStack %>>
+      ) : (
+        <FlatList
+          ref={flatListRef}
+          data={messages}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <MessageBubble
+              message={item}
+              colors={colors}
+              typography={typography}
+              spacing={spacing}
+              radius={radius}
+            />
+          )}
+          contentContainerStyle={{ padding: spacing.md }}
+          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+          onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
+        />
+      )}
+
+      {error && (
+        <<%= uiKit.VStack %>
+          style={{
+            paddingHorizontal: spacing.md,
+            paddingVertical: spacing.sm,
+            backgroundColor: colors.criticalSubtle,
+          }}
+        >
+          <Text style={{ color: colors.critical, fontSize: typography.caption.fontSize }}>
+            {error}
+          </Text>
+        </<%= uiKit.VStack %>>
+      )}
+
+      <<%= uiKit.HStack %>
+        style={{
+          alignItems: 'flex-end',
+          paddingHorizontal: spacing.sm,
+          paddingVertical: spacing.sm,
+          borderTopWidth: 0.5,
+          borderTopColor: colors.border,
+          backgroundColor: colors.background,
+          gap: spacing.sm,
+        }}
+      >
+        {capabilities.image && (
+          <<%= uiKit.HStack %> style={{ gap: spacing.xs }}>
+            <TouchableOpacity
+              onPress={handlePickImage}
+              disabled={isLoading}
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: radius.full,
+                backgroundColor: colors.surfaceRaised,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+            >
+              <Text style={{ fontSize: 18 }}>🖼</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleTakePhoto}
+              disabled={isLoading}
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: radius.full,
+                backgroundColor: colors.surfaceRaised,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+            >
+              <Text style={{ fontSize: 18 }}>📷</Text>
+            </TouchableOpacity>
+          </<%= uiKit.HStack %>>
+        )}
+        <TextInput
+          style={{
+            flex: 1,
+            backgroundColor: colors.surfaceRaised,
+            color: colors.text,
+            fontSize: typography.body.fontSize,
+            borderRadius: radius.xl,
+            paddingHorizontal: spacing.md,
+            paddingVertical: spacing.sm + 2,
+            maxHeight: 120,
+          }}
+          value={input}
+          onChangeText={setInput}
+          placeholder={capabilities.image ? 'Ask about an image...' : 'Type a message...'}
+          placeholderTextColor={colors.textSubtle}
+          multiline
+          maxLength={4000}
+          editable={!isLoading}
+          onSubmitEditing={handleSend}
+          blurOnSubmit={false}
+        />
+        <TouchableOpacity
+          onPress={handleSend}
+          disabled={isLoading || !input.trim()}
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: radius.full,
+            backgroundColor: input.trim() ? colors.primary : colors.surfaceRaised,
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          {isLoading ? (
+            <ActivityIndicator size="small" color={colors.textOnPrimary} />
+          ) : (
+            <Text style={{ color: colors.textOnPrimary, fontSize: 18, fontWeight: '600' }}>
+              ↑
+            </Text>
+          )}
+        </TouchableOpacity>
+      </<%= uiKit.HStack %>>
+    </KeyboardAvoidingView>
+  )
+}
+
+export default function HomeScreen() {
+  return (
+    <AiChatProvider>
+      <ChatContent />
+    </AiChatProvider>
   )
 }

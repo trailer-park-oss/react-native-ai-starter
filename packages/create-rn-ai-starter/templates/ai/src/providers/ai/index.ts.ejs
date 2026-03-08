@@ -4,4 +4,5 @@ export { openRouterClient } from './openrouter'
 <% } else { -%>
 export { useVision, MLKitProvider } from './mlkit'
 <% } -%>
-export type { ChatMessage, ChatOptions, VisionResult } from './ai.interface'
+export { useAiChat, AiChatProvider } from './<%= ai === 'online-openrouter' ? 'openrouter' : 'mlkit' %>'
+export type { ChatMessage, ChatOptions, VisionResult, UseAiChatReturn } from './ai.interface'

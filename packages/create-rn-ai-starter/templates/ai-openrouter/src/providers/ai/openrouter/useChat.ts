@@ -87,13 +87,14 @@ export function useChat(options: {
 
       const result = await openRouterClient.sendMessage(apiMessages, sendOptions)
 
-      if (!streaming) {
-        setMessages(prev =>
-          prev.map(m =>
-            m.id === assistantMessage.id ? { ...m, content: result } : m,
-          ),
-        )
-      }
+      // Always set final content from the returned result to ensure
+      // completeness — covers both non-streaming and the streaming
+      // fallback where ReadableStream is unavailable.
+      setMessages(prev =>
+        prev.map(m =>
+          m.id === assistantMessage.id ? { ...m, content: result } : m,
+        ),
+      )
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to send message'
       setError(message)

@@ -32,12 +32,41 @@ export interface SendMessageOptions {
 
 const DEFAULT_MODEL = 'openai/gpt-4o-mini'
 
+function parseSseEvents(
+  text: string,
+  onToken: (token: string) => void,
+): string {
+  let fullContent = ''
+  for (const line of text.split('\n')) {
+    const trimmed = line.trim()
+    if (!trimmed || !trimmed.startsWith('data: ')) continue
+    const payload = trimmed.slice(6)
+    if (payload === '[DONE]') break
+    try {
+      const chunk: StreamDelta = JSON.parse(payload)
+      const content = chunk.choices[0]?.delta?.content
+      if (content) {
+        fullContent += content
+        onToken(content)
+      }
+    } catch {
+      // Skip malformed SSE chunks
+    }
+  }
+  return fullContent
+}
+
 async function processStream(
   response: Response,
   onToken: (token: string) => void,
 ): Promise<string> {
-  const reader = response.body?.getReader()
-  if (!reader) throw new Error('No response body for streaming')
+  // React Native's fetch often lacks ReadableStream support on response.body.
+  // When unavailable, fall back to reading the full SSE payload as text.
+  const reader = response.body?.getReader?.()
+  if (!reader) {
+    const text = await response.text()
+    return parseSseEvents(text, onToken)
+  }
 
   const decoder = new TextDecoder()
   let fullContent = ''
@@ -51,23 +80,7 @@ async function processStream(
     const lines = buffer.split('\n')
     buffer = lines.pop() ?? ''
 
-    for (const line of lines) {
-      const trimmed = line.trim()
-      if (!trimmed || !trimmed.startsWith('data: ')) continue
-      const payload = trimmed.slice(6)
-      if (payload === '[DONE]') break
-
-      try {
-        const chunk: StreamDelta = JSON.parse(payload)
-        const content = chunk.choices[0]?.delta?.content
-        if (content) {
-          fullContent += content
-          onToken(content)
-        }
-      } catch {
-        // Skip malformed SSE chunks
-      }
-    }
+    fullContent += parseSseEvents(lines.join('\n'), onToken)
   }
 
   return fullContent
@@ -88,6 +101,8 @@ export const openRouterClient = {
       onToken,
     } = options
 
+    const useStream = stream && !!onToken
+
     const response = await fetch(`${baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
@@ -99,7 +114,7 @@ export const openRouterClient = {
         messages,
         temperature,
         max_tokens: maxTokens,
-        stream,
+        stream: useStream,
       }),
     })
 
@@ -108,8 +123,8 @@ export const openRouterClient = {
       throw new Error(`OpenRouter API error (${response.status}): ${error}`)
     }
 
-    if (stream && onToken) {
-      return processStream(response, onToken)
+    if (useStream) {
+      return processStream(response, onToken!)
     }
 
     const data: OpenRouterResponse = await response.json()

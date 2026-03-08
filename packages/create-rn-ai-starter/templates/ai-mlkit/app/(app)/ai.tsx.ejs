@@ -1,12 +1,10 @@
 import { useState } from 'react'
+import { <%= uiKit.VStack %>, <%= uiKit.HStack %>, Text } from '<%= uiKit.lib %>'
 import {
-  View,
-  Text,
   Image,
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
-  StyleSheet,
 } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
 import { useTokens } from '@/design-system'
@@ -41,7 +39,12 @@ function VisionContent() {
       contentContainerStyle={{ padding: spacing.md }}
     >
       {!imageUri ? (
-        <View style={styles.emptyState}>
+        <<%= uiKit.VStack %>
+          style={{
+            paddingVertical: spacing['3xl'] + spacing.md,
+            alignItems: 'center',
+          }}
+        >
           <Text
             style={{
               fontSize: typography.headingLarge.fontSize,
@@ -63,23 +66,22 @@ function VisionContent() {
             Powered by ML Kit. Pick an image to detect objects.
           </Text>
           {!isReady && (
-            <View
+            <<%= uiKit.HStack %>
               style={{
                 marginTop: spacing.md,
-                flexDirection: 'row',
                 alignItems: 'center',
-                gap: 8,
+                gap: spacing.sm,
               }}
             >
               <ActivityIndicator size="small" color={colors.primary} />
               <Text style={{ color: colors.textSubtle, fontSize: typography.caption.fontSize }}>
                 Loading ML model...
               </Text>
-            </View>
+            </<%= uiKit.HStack %>>
           )}
-        </View>
+        </<%= uiKit.VStack %>>
       ) : (
-        <View
+        <<%= uiKit.VStack %>
           style={{
             borderRadius: radius.lg,
             overflow: 'hidden',
@@ -95,28 +97,49 @@ function VisionContent() {
             }}
             resizeMode="cover"
           />
-        </View>
+        </<%= uiKit.VStack %>>
       )}
 
       {isProcessing && (
-        <View style={[styles.statusBanner, { backgroundColor: colors.infoSubtle }]}>
+        <<%= uiKit.HStack %>
+          style={{
+            alignItems: 'center',
+            padding: spacing.sm,
+            borderRadius: radius.md,
+            backgroundColor: colors.infoSubtle,
+            marginBottom: spacing.md,
+          }}
+        >
           <ActivityIndicator size="small" color={colors.info} />
-          <Text style={{ color: colors.info, marginLeft: 8, fontSize: typography.body.fontSize }}>
+          <Text
+            style={{
+              color: colors.info,
+              marginLeft: spacing.sm,
+              fontSize: typography.body.fontSize,
+            }}
+          >
             Analyzing image...
           </Text>
-        </View>
+        </<%= uiKit.HStack %>>
       )}
 
       {error && (
-        <View style={[styles.statusBanner, { backgroundColor: colors.criticalSubtle }]}>
+        <<%= uiKit.VStack %>
+          style={{
+            padding: spacing.sm,
+            borderRadius: radius.md,
+            backgroundColor: colors.criticalSubtle,
+            marginBottom: spacing.md,
+          }}
+        >
           <Text style={{ color: colors.critical, fontSize: typography.body.fontSize }}>
             {error}
           </Text>
-        </View>
+        </<%= uiKit.VStack %>>
       )}
 
       {results.length > 0 && (
-        <View style={{ marginBottom: spacing.md }}>
+        <<%= uiKit.VStack %> style={{ marginBottom: spacing.md }}>
           <Text
             style={{
               fontSize: typography.bodyLarge.fontSize,
@@ -128,12 +151,14 @@ function VisionContent() {
             Detected Objects ({results.length})
           </Text>
           {results.map((item, i) => (
-            <View
+            <<%= uiKit.VStack %>
               key={i}
-              style={[
-                styles.resultCard,
-                { backgroundColor: colors.surfaceRaised, borderRadius: radius.md },
-              ]}
+              style={{
+                backgroundColor: colors.surfaceRaised,
+                borderRadius: radius.md,
+                padding: spacing.sm,
+                marginBottom: spacing.sm,
+              }}
             >
               <Text
                 style={{
@@ -144,14 +169,23 @@ function VisionContent() {
               >
                 {item.label}
               </Text>
-              <View style={styles.confidenceRow}>
-                <View
-                  style={[
-                    styles.confidenceTrack,
-                    { backgroundColor: colors.borderSubtle, borderRadius: radius.sm },
-                  ]}
+              <<%= uiKit.HStack %>
+                style={{
+                  alignItems: 'center',
+                  marginTop: spacing.xs + 2,
+                  gap: spacing.sm,
+                }}
+              >
+                <<%= uiKit.VStack %>
+                  style={{
+                    flex: 1,
+                    height: 6,
+                    borderRadius: radius.sm,
+                    backgroundColor: colors.borderSubtle,
+                    overflow: 'hidden',
+                  }}
                 >
-                  <View
+                  <<%= uiKit.VStack %>
                     style={{
                       width: `${Math.round(item.confidence * 100)}%`,
                       height: '100%',
@@ -159,42 +193,60 @@ function VisionContent() {
                       borderRadius: radius.sm,
                     }}
                   />
-                </View>
+                </<%= uiKit.VStack %>>
                 <Text style={{ color: colors.textSubtle, fontSize: typography.caption.fontSize }}>
                   {Math.round(item.confidence * 100)}%
                 </Text>
-              </View>
-            </View>
+              </<%= uiKit.HStack %>>
+            </<%= uiKit.VStack %>>
           ))}
-        </View>
+        </<%= uiKit.VStack %>>
       )}
 
-      <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+      <<%= uiKit.HStack %> style={{ gap: spacing.sm }}>
         <TouchableOpacity
           onPress={() => pickImage(false)}
           disabled={isProcessing}
-          style={[
-            styles.actionButton,
-            { backgroundColor: colors.primary, borderRadius: radius.md },
-          ]}
+          style={{
+            flex: 1,
+            paddingVertical: spacing.sm + 6,
+            alignItems: 'center',
+            backgroundColor: colors.primary,
+            borderRadius: radius.md,
+          }}
         >
-          <Text style={[styles.actionButtonText, { fontSize: typography.body.fontSize }]}>
+          <Text
+            style={{
+              color: colors.textOnPrimary,
+              fontWeight: '600',
+              fontSize: typography.body.fontSize,
+            }}
+          >
             Gallery
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => pickImage(true)}
           disabled={isProcessing}
-          style={[
-            styles.actionButton,
-            { backgroundColor: colors.primary, borderRadius: radius.md },
-          ]}
+          style={{
+            flex: 1,
+            paddingVertical: spacing.sm + 6,
+            alignItems: 'center',
+            backgroundColor: colors.primary,
+            borderRadius: radius.md,
+          }}
         >
-          <Text style={[styles.actionButtonText, { fontSize: typography.body.fontSize }]}>
+          <Text
+            style={{
+              color: colors.textOnPrimary,
+              fontWeight: '600',
+              fontSize: typography.body.fontSize,
+            }}
+          >
             Camera
           </Text>
         </TouchableOpacity>
-      </View>
+      </<%= uiKit.HStack %>>
     </ScrollView>
   )
 }
@@ -206,41 +258,3 @@ export default function AiVisionScreen() {
     </MLKitProvider>
   )
 }
-
-const styles = StyleSheet.create({
-  emptyState: {
-    paddingVertical: 80,
-    alignItems: 'center',
-  },
-  statusBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
-  },
-  resultCard: {
-    padding: 12,
-    marginBottom: 8,
-  },
-  confidenceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 6,
-    gap: 8,
-  },
-  confidenceTrack: {
-    flex: 1,
-    height: 6,
-    overflow: 'hidden',
-  },
-  actionButton: {
-    flex: 1,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  actionButtonText: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-  },
-})

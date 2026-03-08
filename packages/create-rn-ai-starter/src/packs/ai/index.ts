@@ -29,7 +29,7 @@ export function createAiPack(config: StarterConfig): FeaturePack {
   const isOpenRouter = config.ai === 'online-openrouter'
 
   const expoInstallPackages: string[] = isOpenRouter
-    ? []
+    ? ['expo-image-picker']
     : [
         '@infinitered/react-native-mlkit-object-detection',
         'expo-image-picker',

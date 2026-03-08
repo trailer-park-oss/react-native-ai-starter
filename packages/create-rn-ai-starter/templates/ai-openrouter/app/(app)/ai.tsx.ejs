@@ -1,14 +1,12 @@
 import { useState, useRef } from 'react'
+import { <%= uiKit.VStack %>, <%= uiKit.HStack %>, Text } from '<%= uiKit.lib %>'
 import {
-  View,
-  Text,
   TextInput,
-  TouchableOpacity,
   FlatList,
   KeyboardAvoidingView,
   Platform,
+  TouchableOpacity,
   ActivityIndicator,
-  StyleSheet,
 } from 'react-native'
 import { useTokens } from '@/design-system'
 import { useChat } from '@/providers/ai'
@@ -18,21 +16,31 @@ function MessageBubble({
   message,
   colors,
   typography,
+  spacing,
+  radius,
 }: {
   message: ChatMessage
   colors: ReturnType<typeof useTokens>['colors']
   typography: ReturnType<typeof useTokens>['typography']
+  spacing: ReturnType<typeof useTokens>['spacing']
+  radius: ReturnType<typeof useTokens>['radius']
 }) {
   const isUser = message.role === 'user'
 
   return (
-    <View
-      style={[
-        styles.messageBubble,
-        isUser
-          ? { alignSelf: 'flex-end', backgroundColor: colors.primary, borderBottomRightRadius: 4 }
-          : { alignSelf: 'flex-start', backgroundColor: colors.surfaceRaised, borderBottomLeftRadius: 4 },
-      ]}
+    <<%= uiKit.VStack %>
+      style={{
+        alignSelf: isUser ? 'flex-end' : 'flex-start',
+        maxWidth: '80%',
+        backgroundColor: isUser ? colors.primary : colors.surfaceRaised,
+        paddingHorizontal: spacing.md,
+        paddingVertical: spacing.sm + 2,
+        borderRadius: radius.xl,
+        ...(isUser
+          ? { borderBottomRightRadius: radius.sm }
+          : { borderBottomLeftRadius: radius.sm }),
+        marginVertical: spacing.xs / 2,
+      }}
     >
       <Text
         style={{
@@ -43,7 +51,7 @@ function MessageBubble({
       >
         {message.content || '...'}
       </Text>
-    </View>
+    </<%= uiKit.VStack %>>
   )
 }
 
@@ -64,12 +72,19 @@ export default function AiChatScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: colors.background }]}
+      style={{ flex: 1, backgroundColor: colors.background }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={100}
     >
       {messages.length === 0 ? (
-        <View style={styles.emptyState}>
+        <<%= uiKit.VStack %>
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            paddingHorizontal: spacing.xl,
+          }}
+        >
           <Text
             style={{
               fontSize: typography.headingLarge.fontSize,
@@ -90,14 +105,20 @@ export default function AiChatScreen() {
           >
             Powered by OpenRouter. Send a message to get started.
           </Text>
-        </View>
+        </<%= uiKit.VStack %>>
       ) : (
         <FlatList
           ref={flatListRef}
           data={messages}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <MessageBubble message={item} colors={colors} typography={typography} />
+            <MessageBubble
+              message={item}
+              colors={colors}
+              typography={typography}
+              spacing={spacing}
+              radius={radius}
+            />
           )}
           contentContainerStyle={{ padding: spacing.md }}
           onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
@@ -106,29 +127,41 @@ export default function AiChatScreen() {
       )}
 
       {error && (
-        <View style={[styles.errorBanner, { backgroundColor: colors.criticalSubtle }]}>
+        <<%= uiKit.VStack %>
+          style={{
+            paddingHorizontal: spacing.md,
+            paddingVertical: spacing.sm,
+            backgroundColor: colors.criticalSubtle,
+          }}
+        >
           <Text style={{ color: colors.critical, fontSize: typography.caption.fontSize }}>
             {error}
           </Text>
-        </View>
+        </<%= uiKit.VStack %>>
       )}
 
-      <View
-        style={[
-          styles.inputBar,
-          { borderTopColor: colors.border, backgroundColor: colors.background },
-        ]}
+      <<%= uiKit.HStack %>
+        style={{
+          alignItems: 'flex-end',
+          paddingHorizontal: spacing.sm,
+          paddingVertical: spacing.sm,
+          borderTopWidth: 0.5,
+          borderTopColor: colors.border,
+          backgroundColor: colors.background,
+          gap: spacing.sm,
+        }}
       >
         <TextInput
-          style={[
-            styles.input,
-            {
-              backgroundColor: colors.surfaceRaised,
-              color: colors.text,
-              fontSize: typography.body.fontSize,
-              borderRadius: radius.xl,
-            },
-          ]}
+          style={{
+            flex: 1,
+            backgroundColor: colors.surfaceRaised,
+            color: colors.text,
+            fontSize: typography.body.fontSize,
+            borderRadius: radius.xl,
+            paddingHorizontal: spacing.md,
+            paddingVertical: spacing.sm + 2,
+            maxHeight: 120,
+          }}
           value={input}
           onChangeText={setInput}
           placeholder="Type a message..."
@@ -142,66 +175,24 @@ export default function AiChatScreen() {
         <TouchableOpacity
           onPress={handleSend}
           disabled={isLoading || !input.trim()}
-          style={[
-            styles.sendButton,
-            {
-              backgroundColor: input.trim() ? colors.primary : colors.surfaceRaised,
-              borderRadius: radius.full,
-            },
-          ]}
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: radius.full,
+            backgroundColor: input.trim() ? colors.primary : colors.surfaceRaised,
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
         >
           {isLoading ? (
             <ActivityIndicator size="small" color={colors.textOnPrimary} />
           ) : (
-            <Text style={[styles.sendButtonText, { color: colors.textOnPrimary }]}>↑</Text>
+            <Text style={{ color: colors.textOnPrimary, fontSize: 18, fontWeight: '600' }}>
+              ↑
+            </Text>
           )}
         </TouchableOpacity>
-      </View>
+      </<%= uiKit.HStack %>>
     </KeyboardAvoidingView>
   )
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 32,
-  },
-  messageBubble: {
-    maxWidth: '80%',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 18,
-    marginVertical: 4,
-  },
-  errorBanner: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  inputBar: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    gap: 8,
-  },
-  input: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    maxHeight: 120,
-  },
-  sendButton: {
-    width: 36,
-    height: 36,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  sendButtonText: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-})

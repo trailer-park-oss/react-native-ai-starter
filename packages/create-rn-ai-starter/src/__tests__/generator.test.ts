@@ -516,14 +516,16 @@ describe('UI kit pattern — tamagui screens', () => {
     expect(content).toContain('PrimaryButton')
   })
 
-  it('home screen uses YStack as container', async () => {
+  it('home screen uses YStack as container and imports uiKit', async () => {
     tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-starter-'))
     await renderTemplates('core', tmpDir, toTemplateData('tam-app', { ...DEFAULT_CONFIG, ui: 'tamagui' }))
 
     const content = await readFile(path.join(tmpDir, 'app/(app)/index.tsx'), 'utf-8')
-    expect(content).toContain("import { YStack, Text } from 'tamagui'")
-    expect(content).toContain('<YStack')
-    expect(content).not.toContain('VStack')
+    expect(content).toContain("from 'tamagui'")
+    expect(content).toContain('YStack')
+    expect(content).toContain('XStack')
+    expect(content).toContain('useTokens')
+    expect(content).toContain('useAiChat')
     expect(content).not.toContain('StyleSheet')
   })
 
@@ -564,14 +566,16 @@ describe('UI kit pattern — gluestack screens', () => {
     expect(content).toContain('PrimaryButton')
   })
 
-  it('home screen uses VStack as container', async () => {
+  it('home screen uses VStack as container and imports uiKit', async () => {
     tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-starter-'))
     await renderTemplates('core', tmpDir, toTemplateData('gs-app', { ...DEFAULT_CONFIG, ui: 'gluestack' }))
 
     const content = await readFile(path.join(tmpDir, 'app/(app)/index.tsx'), 'utf-8')
-    expect(content).toContain("import { VStack, Text } from '@gluestack-ui/themed'")
-    expect(content).toContain('<VStack')
-    expect(content).not.toContain('YStack')
+    expect(content).toContain("from '@gluestack-ui/themed'")
+    expect(content).toContain('VStack')
+    expect(content).toContain('HStack')
+    expect(content).toContain('useTokens')
+    expect(content).toContain('useAiChat')
     expect(content).not.toContain('StyleSheet')
   })
 
