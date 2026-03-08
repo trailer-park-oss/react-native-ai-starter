@@ -1,0 +1,25 @@
+<% if (hasAuth) { -%>
+import { starterConfig } from '@/starter.config'
+
+export type AuthModule = {
+  // TODO: Phase 3 — define auth adapter exports
+  useAuth: () => { isAuthenticated: boolean; isLoading: boolean }
+}
+
+export async function getAuthProvider(): Promise<AuthModule> {
+  switch (starterConfig.auth) {
+    case 'clerk':
+      return import('@/providers/auth/clerk')
+  }
+}
+
+// Temporary stub until Phase 3 implementation
+export function useAuth() {
+  return { isAuthenticated: false, isLoading: false }
+}
+<% } else { -%>
+// Auth is disabled (mode: none). This is a no-op stub.
+export function useAuth() {
+  return { isAuthenticated: false, isLoading: false }
+}
+<% } -%>

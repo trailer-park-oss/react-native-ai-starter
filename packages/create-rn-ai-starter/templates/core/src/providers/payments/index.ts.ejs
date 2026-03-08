@@ -1,0 +1,25 @@
+<% if (hasPayments) { -%>
+import { starterConfig } from '@/starter.config'
+
+export type PaymentsModule = {
+  // TODO: Phase 4 — define payments adapter exports
+  usePayments: () => { isReady: boolean }
+}
+
+export async function getPaymentsProvider(): Promise<PaymentsModule> {
+  switch (starterConfig.payments) {
+    case 'stripe':
+      return import('@/providers/payments/stripe')
+  }
+}
+
+// Temporary stub until Phase 4 implementation
+export function usePayments() {
+  return { isReady: false }
+}
+<% } else { -%>
+// Payments is disabled (mode: none). This is a no-op stub.
+export function usePayments() {
+  return { isReady: false }
+}
+<% } -%>

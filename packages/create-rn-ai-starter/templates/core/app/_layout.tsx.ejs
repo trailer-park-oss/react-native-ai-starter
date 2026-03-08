@@ -1,0 +1,55 @@
+import { useEffect } from 'react'
+import { Slot, useRouter, useSegments } from 'expo-router'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { SafeAreaProvider } from 'react-native-safe-area-context'
+import { queryClient } from '@/lib/query-client'
+import { useOnboardingStore } from '@/store/onboarding'
+<% if (hasAuth) { -%>
+import { useAuth } from '@/providers/auth'
+<% } -%>
+
+function RouteGuard() {
+  const { hasCompletedOnboarding } = useOnboardingStore()
+<% if (hasAuth) { -%>
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth()
+<% } -%>
+  const segments = useSegments()
+  const router = useRouter()
+
+  useEffect(() => {
+<% if (hasAuth) { -%>
+    if (isAuthLoading) return
+
+    const inOnboarding = segments[0] === '(onboarding)'
+    const inAuth = segments[0] === '(auth)'
+
+    if (!hasCompletedOnboarding && !inOnboarding) {
+      router.replace('/(onboarding)/welcome')
+    } else if (hasCompletedOnboarding && !isAuthenticated && !inAuth) {
+      router.replace('/(auth)/sign-in')
+    } else if (hasCompletedOnboarding && isAuthenticated && (inOnboarding || inAuth)) {
+      router.replace('/(app)')
+    }
+<% } else { -%>
+    const inOnboarding = segments[0] === '(onboarding)'
+
+    if (!hasCompletedOnboarding && !inOnboarding) {
+      router.replace('/(onboarding)/welcome')
+    } else if (hasCompletedOnboarding && inOnboarding) {
+      router.replace('/(app)')
+    }
+<% } -%>
+  }, [hasCompletedOnboarding, <% if (hasAuth) { %>isAuthenticated, isAuthLoading, <% } %>segments])
+
+  return <Slot />
+}
+
+export default function RootLayout() {
+  return (
+    <SafeAreaProvider>
+      <QueryClientProvider client={queryClient}>
+        <RouteGuard />
+      </QueryClientProvider>
+    </SafeAreaProvider>
+  )
+}

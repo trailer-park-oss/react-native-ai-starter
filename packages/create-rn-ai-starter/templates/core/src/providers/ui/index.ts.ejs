@@ -1,0 +1,17 @@
+import { starterConfig } from '@/starter.config'
+
+export type UiAdapterModule = {
+  // TODO: Phase 2 — define UI adapter exports
+}
+
+export async function getUiAdapter(): Promise<UiAdapterModule> {
+  switch (starterConfig.ui) {
+<% if (ui === 'tamagui') { -%>
+    case 'tamagui':
+      return import('@/providers/ui/tamagui')
+<% } else { -%>
+    case 'gluestack':
+      return import('@/providers/ui/gluestack')
+<% } -%>
+  }
+}

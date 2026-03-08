@@ -1,0 +1,12 @@
+import { create } from 'zustand'
+import type { ThemePreset } from '@/starter.config'
+
+interface ThemeState {
+  preset: ThemePreset
+  setPreset: (preset: ThemePreset) => void
+}
+
+export const useThemeStore = create<ThemeState>((set) => ({
+  preset: '<%= preset %>',
+  setPreset: (preset) => set({ preset }),
+}))

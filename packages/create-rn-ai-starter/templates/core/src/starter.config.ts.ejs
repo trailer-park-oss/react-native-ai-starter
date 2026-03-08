@@ -1,0 +1,21 @@
+export type UiProvider = 'tamagui' | 'gluestack'
+export type AuthProvider = 'clerk' | 'none'
+export type PaymentsProvider = 'stripe' | 'none'
+export type DxProfile = 'basic' | 'full'
+export type ThemePreset = 'neutral-green' | 'fluent-blue'
+
+export interface StarterConfig {
+  ui: UiProvider
+  auth: AuthProvider
+  payments: PaymentsProvider
+  dx: DxProfile
+  preset: ThemePreset
+}
+
+export const starterConfig: StarterConfig = {
+  ui: '<%= ui %>',
+  auth: '<%= auth %>',
+  payments: '<%= payments %>',
+  dx: '<%= dx %>',
+  preset: '<%= preset %>',
+}

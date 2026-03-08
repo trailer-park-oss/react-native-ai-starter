@@ -1,0 +1,38 @@
+{
+  "name": "create-rn-ai-starter",
+  "version": "0.1.0",
+  "description": "CLI to scaffold Expo React Native projects with modular feature packs",
+  "type": "module",
+  "bin": {
+    "create-rn-ai-starter": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "templates"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0",
+    "@inquirer/prompts": "^7.2.0",
+    "ejs": "^3.1.10",
+    "execa": "^9.5.2",
+    "glob": "^11.0.0"
+  },
+  "devDependencies": {
+    "@types/ejs": "^3.1.5",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0",
+    "@types/node": "^22.10.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
