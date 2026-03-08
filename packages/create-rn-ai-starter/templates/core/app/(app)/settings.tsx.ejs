@@ -1,8 +1,15 @@
 import { <%= uiKit.VStack %>, Text } from '<%= uiKit.lib %>'
+<% if (hasAuth) { -%>
+import { Pressable } from 'react-native'
+import { useAuth } from '@/providers/auth/useAuth'
+<% } -%>
 import { useTokens } from '@/design-system'
 
 export default function SettingsScreen() {
-  const { colors, typography, spacing } = useTokens()
+  const { colors, typography, spacing, radius } = useTokens()
+<% if (hasAuth) { -%>
+  const { signOut } = useAuth()
+<% } -%>
 
   return (
     <<%= uiKit.VStack %>
@@ -31,6 +38,29 @@ export default function SettingsScreen() {
       >
         App settings will go here.
       </Text>
+<% if (hasAuth) { -%>
+
+      <Pressable
+        onPress={() => signOut()}
+        style={{
+          marginTop: spacing.xl,
+          backgroundColor: colors.critical,
+          paddingVertical: spacing.md,
+          paddingHorizontal: spacing.xl,
+          borderRadius: radius.md,
+        }}
+      >
+        <Text
+          style={{
+            color: '#fff',
+            fontSize: typography.body.fontSize,
+            fontWeight: '600',
+          }}
+        >
+          Sign Out
+        </Text>
+      </Pressable>
+<% } -%>
     </<%= uiKit.VStack %>>
   )
 }
