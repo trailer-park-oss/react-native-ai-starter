@@ -1,5 +1,5 @@
 {
-  "name": "create-rn-ai-starter",
+  "name": "@trailer-park-oss/create-rn-ai-starter",
   "version": "0.1.0",
   "description": "CLI to scaffold Expo React Native projects with modular feature packs",
   "type": "module",
