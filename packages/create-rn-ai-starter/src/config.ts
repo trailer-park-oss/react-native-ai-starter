@@ -20,7 +20,7 @@ export const ALLOWED_VALUES = {
 export const DEFAULT_CONFIG: StarterConfig = {
   ui: 'tamagui',
   auth: 'none',
-  ai: 'on-device-mlkit',
+  ai: 'online-openrouter',
   payments: 'none',
   dx: 'basic',
   preset: 'radix-blue',

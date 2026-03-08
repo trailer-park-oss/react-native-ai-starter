@@ -1,6 +1,6 @@
 # create-rn-ai-starter
 
-CLI to scaffold Expo React Native projects with modular feature packs.
+CLI to scaffold Expo React Native projects with modular feature packs — including built-in AI chat powered by OpenRouter or on-device ML Kit.
 
 ## Quick Start
 
@@ -35,11 +35,10 @@ npx create-rn-ai-starter .                        # scaffolds in cwd (must be em
 | --- | --- | --- |
 | `--ui <provider>` | `tamagui` \| `gluestack` | `tamagui` |
 | `--auth <provider>` | `clerk` \| `none` | `none` |
-| `--ai <provider>` | `on-device-mlkit` \| `online-openrouter` | `on-device-mlkit` |
-| `--payments <provider>` | `stripe` \| `none` | `none` |
-| `--dx <profile>` | `basic` \| `full` | `basic` |
 | `--preset <theme>` | `radix-blue` \| `radix-green` \| `radix-purple` \| `radix-orange` \| `radix-cyan` \| `radix-red` | `radix-blue` |
 | `--yes` | — | Skip prompts, use defaults for unset flags |
+
+> **Note:** AI, payments, and DX profile options are not yet exposed as CLI flags. The generated project always includes the AI pack (defaults to `online-openrouter`). Payments defaults to `none` and DX defaults to `basic`.
 
 ### Examples
 
@@ -52,18 +51,16 @@ npx create-rn-ai-starter my-app --yes
 Pick specific providers:
 
 ```bash
-npx create-rn-ai-starter my-app --ui gluestack --auth clerk --ai online-openrouter --payments stripe
+npx create-rn-ai-starter my-app --ui gluestack --auth clerk --preset radix-purple
 ```
 
 Mix flags with interactive prompts for the rest:
 
 ```bash
-npx create-rn-ai-starter my-app --ui tamagui --dx full
+npx create-rn-ai-starter my-app --ui tamagui
 ```
 
-Interactive prompt order is:
-`ui -> auth -> ai -> payments -> dx -> preset`.
-The AI prompt is always shown when `--ai` is not provided, regardless of auth mode.
+Interactive prompt order is: `ui -> auth -> preset`.
 
 Scaffold inside an existing projects folder:
 
@@ -82,10 +79,12 @@ npx create-rn-ai-starter . --yes
 
 The CLI creates a new Expo project with:
 
-- **Core** — Expo Router file-based routing, onboarding flow (3 screens), tab navigation (Home, Profile, Settings), Zustand stores, React Query setup, provider resolvers, and a `starter.config.ts` manifest.
+- **Core** — Expo Router file-based routing, onboarding flow (3 screens), tab navigation (Home, AI, Settings), login button, Zustand stores, React Query setup, provider resolvers, and a `starter.config.ts` manifest.
 - **UI** — Full design system with canonical tokens (colors, spacing, radius, typography), `ThemeProvider` with animated transitions, MMKV-persisted theme store, and library-specific components (Card, PrimaryButton, StatusBanner). Screens import directly from the selected UI library via the kit pattern — `tamagui` or `@gluestack-ui/themed`.
-- **Auth** — Auth provider wiring and `(auth)` route group (when not `none`).
-- **Payments** — Payments provider wiring (when not `none`).
+- **AI** — AI chat screen with a shared provider interface (`ai.interface.ts`). Two back-end implementations:
+  - **OpenRouter** (`online-openrouter`, default) — streaming chat client, `useChat` / `useAiChat` hooks, and env config for API keys.
+  - **ML Kit** (`on-device-mlkit`) — on-device object detection via `@infinitered/react-native-mlkit-object-detection`, vision hook, and camera/image-picker integration.
+- **Auth** — Auth provider wiring, `(auth)` route group, and login button (when not `none`).
 - **DX** — Developer experience profile (linting, formatting, TypeScript strictness).
 
 After scaffolding, the CLI installs dependencies and runs validation checks to make sure everything is wired correctly.
@@ -98,6 +97,15 @@ Screens use the selected library's components directly — no abstraction layer:
 - `--ui gluestack` → screens import `VStack`, `Text` from `'@gluestack-ui/themed'`
 
 This is powered by a **kit pattern** in the CLI templates: a plain object maps component names and import paths per library, so screen templates are written once with EJS variables and produce clean, idiomatic output for each library.
+
+### AI providers
+
+Every generated project includes an AI tab with a chat interface. The provider is selected at scaffold time (defaults to OpenRouter):
+
+- **OpenRouter** — calls cloud LLMs via the OpenRouter API with streaming responses. Requires an `OPENROUTER_API_KEY` environment variable at runtime.
+- **ML Kit** — runs object detection on-device using React Native ML Kit. No API key needed; works fully offline.
+
+Both providers implement a shared `AiChatProvider` interface so swapping later is straightforward.
 
 ### Theme presets
 
@@ -125,9 +133,9 @@ my-app/
 │   │   ├── features.tsx
 │   │   └── get-started.tsx
 │   ├── (app)/
-│   │   ├── _layout.tsx          # Tab navigator (Home, Profile, Settings)
-│   │   ├── index.tsx
-│   │   ├── profile.tsx
+│   │   ├── _layout.tsx          # Tab navigator (Home, AI, Settings)
+│   │   ├── index.tsx            # Home screen with login button
+│   │   ├── ai.tsx               # AI chat screen
 │   │   └── settings.tsx
 │   └── (auth)/                  # (generated when auth ≠ none)
 │       └── _layout.tsx
@@ -153,6 +161,15 @@ my-app/
 │       ├── ui/
 │       │   ├── index.ts          # Resolver — tamagui or gluestack
 │       │   └── tamagui/          # (or gluestack/) — library-specific config & provider
+│       ├── ai/
+│       │   ├── ai.interface.ts   # Shared AI provider interface
+│       │   ├── index.ts          # Barrel export
+│       │   └── openrouter/       # (or mlkit/) — provider-specific implementation
+│       │       ├── client.ts     # Streaming OpenRouter API client
+│       │       ├── useChat.ts    # Chat hook with message history
+│       │       ├── useAiChat.ts  # High-level chat hook
+│       │       ├── env.ts        # API key configuration
+│       │       └── index.ts
 │       ├── auth/index.ts         # Resolver — clerk or no-op stub
 │       └── payments/index.ts     # Resolver — stripe or no-op stub
 ├── tamagui.config.ts             # (only when --ui tamagui)
@@ -166,6 +183,12 @@ my-app/
 ```bash
 cd my-app
 npx expo start
+```
+
+For OpenRouter AI, set your API key before running:
+
+```bash
+OPENROUTER_API_KEY=sk-or-... npx expo start
 ```
 
 ## Development
