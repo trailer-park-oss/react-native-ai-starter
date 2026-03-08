@@ -402,13 +402,14 @@ describe('route group generation', () => {
     expect(await exists(path.join(tmpDir, 'app/(onboarding)/get-started.tsx'))).toBe(true)
   })
 
-  it('app layout uses Tabs with Home, Profile, Settings', async () => {
+  it('app layout uses Tabs with Home, AI, Profile, Settings', async () => {
     tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-starter-'))
     await renderTemplates('core', tmpDir, toTemplateData('tab-app', DEFAULT_CONFIG))
 
     const content = await readFile(path.join(tmpDir, 'app/(app)/_layout.tsx'), 'utf-8')
     expect(content).toContain('Tabs')
     expect(content).toContain("title: 'Home'")
+    expect(content).toContain("title: 'AI'")
     expect(content).toContain("title: 'Profile'")
     expect(content).toContain("title: 'Settings'")
   })

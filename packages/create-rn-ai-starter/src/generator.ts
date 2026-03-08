@@ -67,6 +67,7 @@ function printSummary(
   logger.info('Configuration:')
   logger.info(`  UI:       ${config.ui}`)
   logger.info(`  Auth:     ${config.auth}`)
+  logger.info(`  AI:       ${config.ai}`)
   logger.info(`  Payments: ${config.payments}`)
   logger.info(`  DX:       ${config.dx}`)
   logger.info(`  Preset:   ${config.preset}`)

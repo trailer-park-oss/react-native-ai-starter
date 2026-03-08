@@ -1,0 +1,127 @@
+---
+description: React Native performance optimization guidelines for FPS, TTI, bundle size, memory leaks, re-renders, and animations. Applies to tasks involving Hermes optimization, JS thread blocking, bridge overhead, FlashList, native modules, or debugging jank and frame drops.
+globs: *.tsx,*.ts,*.jsx,*.js,android/**,ios/**,app.json,app.config.*,metro.config.*,babel.config.*
+alwaysApply: false
+---
+
+# React Native Best Practices
+
+Performance optimization guide for React Native applications, covering JavaScript/React, Native (iOS/Android), and bundling optimizations. Based on Callstack's "Ultimate Guide to React Native Optimization".
+
+## When to Apply
+
+Reference these guidelines when:
+- Debugging slow/janky UI or animations
+- Investigating memory leaks (JS or native)
+- Optimizing app startup time (TTI)
+- Reducing bundle or app size
+- Writing native modules (Turbo Modules)
+- Profiling React Native performance
+- Reviewing React Native code for performance
+
+## Priority-Ordered Guidelines
+
+| Priority | Category | Impact | Prefix |
+|----------|----------|--------|--------|
+| 1 | FPS & Re-renders | CRITICAL | `js-*` |
+| 2 | Bundle Size | CRITICAL | `bundle-*` |
+| 3 | TTI Optimization | HIGH | `native-*`, `bundle-*` |
+| 4 | Native Performance | HIGH | `native-*` |
+| 5 | Memory Management | MEDIUM-HIGH | `js-*`, `native-*` |
+| 6 | Animations | MEDIUM | `js-*` |
+
+## Optimization Workflow
+
+Follow this cycle for any performance issue: **Measure → Optimize → Re-measure → Validate**
+
+1. **Measure**: Capture baseline metrics (FPS, TTI, bundle size) before changes
+2. **Optimize**: Apply the targeted fix from the relevant reference
+3. **Re-measure**: Run the same measurement to get updated metrics
+4. **Validate**: Confirm improvement (e.g., FPS 45→60, TTI 3.2s→1.8s, bundle 2.1MB→1.6MB)
+
+If metrics did not improve, revert and try the next suggested fix.
+
+## When to Load Reference Files
+
+Load specific reference files from `.codex/skills/react-native-best-practices/references/` based on the task:
+
+### JavaScript/React Performance (`js-*`)
+
+- **Debugging slow/janky UI or animations** → `references/js-measure-fps.md`
+- **Investigating re-render issues** → `references/js-profile-react.md` → `references/js-react-compiler.md`
+- **Optimizing list scrolling** → `references/js-lists-flatlist-flashlist.md`
+- **Reducing re-renders with state management** → `references/js-atomic-state.md`
+- **Using Concurrent React features** → `references/js-concurrent-react.md`
+- **Enabling automatic memoization** → `references/js-react-compiler.md`
+- **Optimizing animations** → `references/js-animations-reanimated.md`
+- **Fixing TextInput lag** → `references/js-uncontrolled-components.md`
+- **Hunting JavaScript memory leaks** → `references/js-memory-leaks.md`
+
+### Native Performance (`native-*`)
+
+- **Measuring startup time (TTI)** → `references/native-measure-tti.md`
+- **Building native modules** → `references/native-turbo-modules.md`
+- **Understanding native threading** → `references/native-threading-model.md`
+- **Profiling native code** → `references/native-profiling.md`
+- **Setting up native tooling** → `references/native-platform-setup.md`
+- **Debugging view hierarchy** → `references/native-view-flattening.md`
+- **Native memory patterns** → `references/native-memory-patterns.md`
+- **Hunting native memory leaks** → `references/native-memory-leaks.md`
+- **Choosing native SDKs vs polyfills** → `references/native-sdks-over-polyfills.md`
+- **Fixing Android 16KB alignment** → `references/native-android-16kb-alignment.md`
+
+### Bundle & App Size (`bundle-*`)
+
+- **Analyzing bundle size** → `references/bundle-analyze-js.md`
+- **Analyzing app size** → `references/bundle-analyze-app.md`
+- **Fixing barrel imports** → `references/bundle-barrel-exports.md`
+- **Enabling tree shaking** → `references/bundle-tree-shaking.md`
+- **Android code shrinking** → `references/bundle-r8-android.md`
+- **Optimizing Hermes bundle loading** → `references/bundle-hermes-mmap.md`
+- **Managing native assets** → `references/bundle-native-assets.md`
+- **Evaluating library size** → `references/bundle-library-size.md`
+- **Code splitting** → `references/bundle-code-splitting.md`
+
+## Problem → Reference Mapping
+
+| Problem | Start With |
+|---------|-----------|
+| App feels slow/janky | `js-measure-fps.md` → `js-profile-react.md` |
+| Too many re-renders | `js-profile-react.md` → `js-react-compiler.md` |
+| Slow startup (TTI) | `native-measure-tti.md` → `bundle-analyze-js.md` |
+| Large app size | `bundle-analyze-app.md` → `bundle-r8-android.md` |
+| Memory growing | `js-memory-leaks.md` or `native-memory-leaks.md` |
+| Animation drops frames | `js-animations-reanimated.md` |
+| List scroll jank | `js-lists-flatlist-flashlist.md` |
+| TextInput lag | `js-uncontrolled-components.md` |
+| Native module slow | `native-turbo-modules.md` → `native-threading-model.md` |
+| Native library alignment issue | `native-android-16kb-alignment.md` |
+
+## Quick Reference: Critical Fixes
+
+### FPS & Re-renders
+- Replace ScrollView with FlatList/FlashList for lists
+- Use React Compiler for automatic memoization
+- Use atomic state (Jotai/Zustand) to reduce re-renders
+- Use `useDeferredValue` for expensive computations
+
+### Bundle Size
+- Avoid barrel imports (import directly from source)
+- Remove unnecessary Intl polyfills (Hermes has native support)
+- Enable tree shaking (Expo SDK 52+ or Re.Pack)
+- Enable R8 for Android native code shrinking
+
+### TTI Optimization
+- Disable JS bundle compression on Android (enables Hermes mmap)
+- Use native navigation (react-native-screens)
+- Preload commonly-used expensive screens before navigating to them
+
+### Native Performance
+- Use background threads for heavy native work
+- Prefer async over sync Turbo Module methods
+- Use C++ for cross-platform performance-critical code
+
+## Attribution
+
+Based on "The Ultimate Guide to React Native Optimization" by Callstack.
+Source: https://github.com/callstackincubator/agent-skills/tree/main/skills/react-native-best-practices

@@ -532,7 +532,7 @@ describe('cross-cutting — maximal config (all features enabled)', () => {
 
   it('all packs are active', () => {
     const packs = getActivePacks(maxConfig)
-    expect(packs.map((p) => p.id)).toEqual(['core', 'ui', 'auth', 'payments', 'dx'])
+    expect(packs.map((p) => p.id)).toEqual(['core', 'ui', 'auth', 'ai', 'payments', 'dx'])
   })
 
   it('all files exist and content is consistent', async () => {
@@ -588,9 +588,9 @@ describe('cross-cutting — minimal config (all optional features disabled)', ()
     if (tmpDir) await rm(tmpDir, { recursive: true, force: true })
   })
 
-  it('only core, ui, dx packs are active', () => {
+  it('only core, ui, ai, dx packs are active', () => {
     const packs = getActivePacks(minConfig)
-    expect(packs.map((p) => p.id)).toEqual(['core', 'ui', 'dx'])
+    expect(packs.map((p) => p.id)).toEqual(['core', 'ui', 'ai', 'dx'])
   })
 
   it('no auth or payments wiring in generated files', async () => {

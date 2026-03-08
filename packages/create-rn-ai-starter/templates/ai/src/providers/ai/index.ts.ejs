@@ -1,0 +1,7 @@
+<% if (ai === 'online-openrouter') { -%>
+export { useChat, type UseChatReturn } from './openrouter'
+export { openRouterClient } from './openrouter'
+<% } else { -%>
+export { useVision, MLKitProvider } from './mlkit'
+<% } -%>
+export type { ChatMessage, ChatOptions, VisionResult } from './ai.interface'

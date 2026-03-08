@@ -3,6 +3,7 @@ import type { StarterConfig } from '@/types.js'
 import { corePack } from '@/packs/core/index.js'
 import { createUiPack } from '@/packs/ui/index.js'
 import { authPack } from '@/packs/auth/index.js'
+import { createAiPack } from '@/packs/ai/index.js'
 import { paymentsPack } from '@/packs/payments/index.js'
 import { dxPack } from '@/packs/dx/index.js'
 
@@ -11,6 +12,7 @@ export function getActivePacks(config: StarterConfig): FeaturePack[] {
     corePack,
     createUiPack(config),
     authPack,
+    createAiPack(config),
     paymentsPack,
     dxPack,
   ]
@@ -25,6 +27,8 @@ function isPackEnabled(id: string, config: StarterConfig): boolean {
       return true
     case 'auth':
       return config.auth !== 'none'
+    case 'ai':
+      return true
     case 'payments':
       return config.payments !== 'none'
     case 'dx':

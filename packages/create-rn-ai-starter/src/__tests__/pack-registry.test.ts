@@ -41,7 +41,14 @@ describe('getActivePacks', () => {
     expect(ids).toContain('payments')
   })
 
-  it('maintains deterministic order: core, ui, auth, payments, dx', () => {
+  it('always includes ai pack', () => {
+    const packs = getActivePacks(DEFAULT_CONFIG)
+    const ids = packs.map((p) => p.id)
+
+    expect(ids).toContain('ai')
+  })
+
+  it('maintains deterministic order: core, ui, auth, ai, payments, dx', () => {
     const config: StarterConfig = {
       ui: 'tamagui',
       auth: 'clerk',
@@ -53,14 +60,14 @@ describe('getActivePacks', () => {
     const packs = getActivePacks(config)
     const ids = packs.map((p) => p.id)
 
-    expect(ids).toEqual(['core', 'ui', 'auth', 'payments', 'dx'])
+    expect(ids).toEqual(['core', 'ui', 'auth', 'ai', 'payments', 'dx'])
   })
 
   it('returns correct subset for minimal config', () => {
     const packs = getActivePacks(DEFAULT_CONFIG)
     const ids = packs.map((p) => p.id)
 
-    expect(ids).toEqual(['core', 'ui', 'dx'])
+    expect(ids).toEqual(['core', 'ui', 'ai', 'dx'])
   })
 })
 

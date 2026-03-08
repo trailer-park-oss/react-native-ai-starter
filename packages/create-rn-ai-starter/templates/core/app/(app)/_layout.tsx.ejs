@@ -18,6 +18,10 @@ export default function AppLayout() {
           options={{ title: 'Home', tabBarLabel: 'Home' }}
         />
         <Tabs.Screen
+          name="ai"
+          options={{ title: 'AI', tabBarLabel: 'AI' }}
+        />
+        <Tabs.Screen
           name="profile"
           options={{ title: 'Profile', tabBarLabel: 'Profile' }}
         />
@@ -37,17 +41,21 @@ export default function AppLayout() {
       }}
     >
       <Tabs.Screen
-        name="index"
-        options={{ title: 'Home', tabBarLabel: 'Home' }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{ title: 'Profile', tabBarLabel: 'Profile' }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{ title: 'Settings', tabBarLabel: 'Settings' }}
-      />
+          name="index"
+          options={{ title: 'Home', tabBarLabel: 'Home' }}
+        />
+        <Tabs.Screen
+          name="ai"
+          options={{ title: 'AI', tabBarLabel: 'AI' }}
+        />
+        <Tabs.Screen
+          name="profile"
+          options={{ title: 'Profile', tabBarLabel: 'Profile' }}
+        />
+        <Tabs.Screen
+          name="settings"
+          options={{ title: 'Settings', tabBarLabel: 'Settings' }}
+        />
     </Tabs>
   )
 <% } -%>
