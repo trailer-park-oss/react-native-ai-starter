@@ -9,10 +9,10 @@ import { writeProjectFile } from '@/utils/fs.js'
 
 export async function runGenerator(
   projectName: string,
+  projectDir: string,
   config: StarterConfig,
   logger: Logger,
 ): Promise<void> {
-  const projectDir = path.resolve(process.cwd(), projectName)
   const packs = getActivePacks(config)
   const totalSteps = 4 + packs.length
 
@@ -54,14 +54,14 @@ export async function runGenerator(
   }
 
   // Print summary
-  printSummary(logger, config, results, projectName)
+  printSummary(logger, config, results, projectDir)
 }
 
 function printSummary(
   logger: Logger,
   config: StarterConfig,
   results: { packId: string; result: ValidationResult }[],
-  projectName: string,
+  projectDir: string,
 ): void {
   logger.info('')
   logger.info('Configuration:')
@@ -91,8 +91,9 @@ function printSummary(
     logger.warn('Some validations failed. Check the output above.')
   }
 
+  const cdPath = path.relative(process.cwd(), projectDir) || '.'
   logger.info('')
   logger.info('Next steps:')
-  logger.info(`  cd ${projectName}`)
+  logger.info(`  cd ${cdPath}`)
   logger.info('  npx expo start')
 }

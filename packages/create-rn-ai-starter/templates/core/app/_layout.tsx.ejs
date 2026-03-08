@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Slot, useRouter, useSegments } from 'expo-router'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
+import { ThemeProvider } from '@/design-system'
 import { queryClient } from '@/lib/query-client'
 import { useOnboardingStore } from '@/store/onboarding'
 <% if (hasAuth) { -%>
@@ -48,7 +49,9 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
-        <RouteGuard />
+        <ThemeProvider>
+          <RouteGuard />
+        </ThemeProvider>
       </QueryClientProvider>
     </SafeAreaProvider>
   )

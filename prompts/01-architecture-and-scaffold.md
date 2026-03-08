@@ -120,3 +120,81 @@ Return your answer in this exact structure:
 - Explicit checklist proving selective dependency/file generation.
 
 Be concrete. Every file must contain valid TypeScript/TSX or a clear TODO marker tied to Prompt 2-5 pack implementation.
+
+---
+
+## Implementation Compliance Checklist
+
+Cross-referenced against `packages/create-rn-ai-starter/` on 2026-03-08.
+
+### CLI Scope
+- [x] CLI creates new projects only (`validateProjectName` rejects existing directories)
+- [x] Command shape: `create-rn-ai-starter <project-name>`
+- [x] Flag `--ui tamagui|gluestack`
+- [x] Flag `--auth clerk|none`
+- [x] Flag `--payments stripe|none`
+- [x] Flag `--dx basic|full`
+- [x] Flag `--preset neutral-green|fluent-blue`
+- [x] Flag `--yes` (skip prompts, use defaults)
+- [x] Selective dependency installation (only enabled packs)
+- [x] Selective file generation (only enabled packs)
+
+### Project Structure & Routing
+- [x] Expo SDK (latest stable ~55) with Expo Router
+- [x] Root-level `app/` directory for Expo Router
+- [x] Non-router source code under `src/` (store, lib, providers)
+- [x] Route group `(onboarding)` — always generated
+- [x] Route group `(app)` — always generated
+- [x] Route group `(auth)` — generated only when auth pack enabled (owned by auth pack)
+- [x] Splash/entry handling (`app/index.tsx` with Redirect)
+- [x] Onboarding flow: 3 screens (welcome, features, get-started)
+- [x] Main tab shell: Home, Profile, Settings
+
+### State Management
+- [x] Zustand for client state (`src/store/onboarding.ts`, `src/store/theme.ts`)
+- [x] TanStack Query for server/async state (`src/lib/query-client.ts`)
+- [x] Clear responsibilities — stores for UI/client state, query client for server cache
+
+### Feature-Pack Plugin System
+- [x] Pack registry with deterministic order: core → ui → auth → payments → dx
+- [x] Pack contract: `dependencies` field
+- [x] Pack contract: `devDependencies` field
+- [x] Pack contract: `generate()` (files/templates)
+- [x] Pack contract: `postApplyValidation()`
+- [x] Ownership boundaries via `ownedPaths` per pack
+
+### Provider Selection Mechanism
+- [x] `starter.config.ts` controls selected providers and modes
+- [x] Resolver/factory pattern in `src/providers/ui/index.ts` (switch on config)
+- [x] Resolver/factory pattern in `src/providers/auth/index.ts` (switch on config)
+- [x] Resolver/factory pattern in `src/providers/payments/index.ts` (switch on config)
+- [x] No conditional re-exports — uses async `import()` in switch cases
+- [x] Selection is build-time/import-time (not runtime toggle UI)
+
+### TypeScript & Conventions
+- [x] `strict: true` in generated tsconfig.json
+- [x] `noUncheckedIndexedAccess: true` in generated tsconfig.json
+- [x] Path alias `@/* → src/*` in generated tsconfig.json
+- [x] All template outputs produce valid TypeScript/TSX
+- [x] Stub packs use TODO markers tied to Prompts 2-5
+
+### Required `starter.config.ts` Shape
+- [x] Type `UiProvider = 'tamagui' | 'gluestack'`
+- [x] Type `AuthProvider = 'clerk' | 'none'`
+- [x] Type `PaymentsProvider = 'stripe' | 'none'`
+- [x] Type `DxProfile = 'basic' | 'full'`
+- [x] Type `ThemePreset = 'neutral-green' | 'fluent-blue'`
+- [x] Interface `StarterConfig` with all 5 fields
+- [x] Exported `starterConfig` const with interpolated values
+
+### Generator Lifecycle
+- [x] Step 1: Parse arguments (Commander)
+- [x] Step 2: Validate project name (regex + no existing dir)
+- [x] Step 3: Prompt for missing options (or `--yes` for defaults)
+- [x] Step 4: Validate config (all values in allowed set)
+- [x] Step 5: Create project directory
+- [x] Step 6: Apply packs in deterministic order
+- [x] Step 7: Write merged package.json
+- [x] Step 8: Install dependencies (npm install + npx expo install)
+- [x] Step 9: Run post-apply validations
+- [x] Step 10: Print summary with next steps

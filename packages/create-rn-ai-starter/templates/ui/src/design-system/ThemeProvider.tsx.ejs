@@ -1,0 +1,79 @@
+import { createContext, useContext, useEffect, type PropsWithChildren } from 'react'
+import { useColorScheme } from 'react-native'
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+} from 'react-native-reanimated'
+import { useThemeStore } from '@/store/theme'
+import {
+  resolveTokens,
+  type DesignTokens,
+  type ColorMode,
+} from '@/design-system/tokens'
+<% if (ui === 'tamagui') { -%>
+import { TamaguiAdapter } from '@/providers/ui/tamagui/TamaguiProvider'
+<% } else { -%>
+import { GluestackAdapter } from '@/providers/ui/gluestack/GluestackProvider'
+<% } -%>
+
+const TokenContext = createContext<DesignTokens | null>(null)
+
+export function useTokens(): DesignTokens {
+  const ctx = useContext(TokenContext)
+  if (!ctx) throw new Error('useTokens must be used within ThemeProvider')
+  return ctx
+}
+
+const TRANSITION_MS = 300
+
+function AnimatedBackground({
+  children,
+  backgroundColor,
+}: PropsWithChildren<{ backgroundColor: string }>) {
+  const bgColor = useSharedValue(backgroundColor)
+
+  useEffect(() => {
+    bgColor.value = withTiming(backgroundColor, { duration: TRANSITION_MS })
+  }, [backgroundColor, bgColor])
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    backgroundColor: bgColor.value,
+    flex: 1,
+  }))
+
+  return <Animated.View style={animatedStyle}>{children}</Animated.View>
+}
+
+export function ThemeProvider({ children }: PropsWithChildren) {
+  const { preset, colorMode: storeColorMode } = useThemeStore()
+  const systemScheme = useColorScheme()
+
+  const mode: ColorMode =
+    storeColorMode === 'system'
+      ? (systemScheme === 'dark' ? 'dark' : 'light')
+      : storeColorMode
+
+  const tokens = resolveTokens(preset, mode)
+<% if (ui === 'tamagui') { -%>
+  const themeName = `${preset}-${mode}` as const
+<% } -%>
+
+  return (
+    <TokenContext.Provider value={tokens}>
+<% if (ui === 'tamagui') { -%>
+      <TamaguiAdapter themeName={themeName}>
+<% } else { -%>
+      <GluestackAdapter colorMode={mode}>
+<% } -%>
+        <AnimatedBackground backgroundColor={tokens.colors.background}>
+          {children}
+        </AnimatedBackground>
+<% if (ui === 'tamagui') { -%>
+      </TamaguiAdapter>
+<% } else { -%>
+      </GluestackAdapter>
+<% } -%>
+    </TokenContext.Provider>
+  )
+}

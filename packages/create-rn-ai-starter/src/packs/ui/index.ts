@@ -1,20 +1,125 @@
-import type { FeaturePack } from '@/packs/pack.interface.js'
-import type { PackContext } from '@/types.js'
+import type { FeaturePack, ValidationCheck } from '@/packs/pack.interface.js'
+import type { PackContext, StarterConfig } from '@/types.js'
+import { renderTemplates, type TemplateData } from '@/utils/template.js'
+import { fileExists } from '@/utils/fs.js'
 
-export const uiPack: FeaturePack = {
-  id: 'ui',
-  // TODO: Phase 2 — populate based on ctx.config.ui (tamagui or gluestack)
-  dependencies: {},
-  devDependencies: {},
-  ownedPaths: [
-    'src/design-system/',
-    'src/providers/ui/tamagui/',
-    'src/providers/ui/gluestack/',
-  ],
-  async generate(ctx: PackContext) {
-    ctx.logger.info('UI pack: stub (Phase 2 — design system & tokens)')
-  },
-  async postApplyValidation() {
-    return { passed: true, checks: [] }
-  },
+function buildTemplateData(ctx: PackContext): TemplateData {
+  return {
+    projectName: ctx.projectName,
+    ui: ctx.config.ui,
+    auth: ctx.config.auth,
+    payments: ctx.config.payments,
+    dx: ctx.config.dx,
+    preset: ctx.config.preset,
+    hasAuth: ctx.config.auth !== 'none',
+    hasPayments: ctx.config.payments !== 'none',
+    isFullDx: ctx.config.dx === 'full',
+  }
+}
+
+async function check(name: string, fn: () => Promise<boolean>): Promise<ValidationCheck> {
+  const passed = await fn()
+  return { name, passed, message: passed ? undefined : 'File not found' }
+}
+
+export function createUiPack(config: StarterConfig): FeaturePack {
+  const isTamagui = config.ui === 'tamagui'
+
+  const dependencies: Record<string, string> = isTamagui
+    ? {
+        'tamagui': '^1.116.0',
+        '@tamagui/config': '^1.116.0',
+        '@tamagui/font-inter': '^1.116.0',
+        '@tamagui/animations-react-native': '^1.116.0',
+      }
+    : {
+        '@gluestack-ui/themed': '^1.1.0',
+        '@gluestack-style/react': '^1.0.0',
+        '@gluestack-ui/config': '^1.1.0',
+      }
+
+  const devDependencies: Record<string, string> = isTamagui
+    ? { '@tamagui/babel-plugin': '^1.116.0' }
+    : {}
+
+  return {
+    id: 'ui',
+    dependencies,
+    devDependencies,
+    expoInstallPackages: [
+      'react-native-reanimated',
+      'react-native-mmkv',
+      'expo-haptics',
+      'expo-linear-gradient',
+    ],
+    ownedPaths: [
+      'src/design-system/',
+      'src/components/',
+      ...(isTamagui
+        ? ['src/providers/ui/tamagui/', 'tamagui.config.ts']
+        : ['src/providers/ui/gluestack/']),
+    ],
+    async generate(ctx: PackContext) {
+      const data = buildTemplateData(ctx)
+
+      ctx.logger.info('Generating shared design system templates')
+      await renderTemplates('ui', ctx.projectDir, data)
+
+      if (isTamagui) {
+        ctx.logger.info('Generating Tamagui adapter templates')
+        await renderTemplates('ui-tamagui', ctx.projectDir, data)
+      } else {
+        ctx.logger.info('Generating Gluestack adapter templates')
+        await renderTemplates('ui-gluestack', ctx.projectDir, data)
+      }
+    },
+    async postApplyValidation(ctx: PackContext) {
+      const sharedChecks = [
+        check('Design system tokens exist', () =>
+          fileExists(ctx.projectDir, 'src/design-system/tokens.ts')),
+        check('ThemeProvider exists', () =>
+          fileExists(ctx.projectDir, 'src/design-system/ThemeProvider.tsx')),
+        check('Elevation styles exist', () =>
+          fileExists(ctx.projectDir, 'src/design-system/elevation.ts')),
+        check('Design system barrel export exists', () =>
+          fileExists(ctx.projectDir, 'src/design-system/index.ts')),
+        check('MMKV storage adapter exists', () =>
+          fileExists(ctx.projectDir, 'src/lib/mmkv-storage.ts')),
+        check('Persisted theme store exists', () =>
+          fileExists(ctx.projectDir, 'src/store/theme.ts')),
+      ]
+
+      const libraryChecks = isTamagui
+        ? [
+            check('Tamagui config exists', () =>
+              fileExists(ctx.projectDir, 'src/providers/ui/tamagui/tamagui.config.ts')),
+            check('TamaguiProvider exists', () =>
+              fileExists(ctx.projectDir, 'src/providers/ui/tamagui/TamaguiProvider.tsx')),
+            check('Root tamagui.config.ts exists', () =>
+              fileExists(ctx.projectDir, 'tamagui.config.ts')),
+          ]
+        : [
+            check('Gluestack config exists', () =>
+              fileExists(ctx.projectDir, 'src/providers/ui/gluestack/gluestack.config.ts')),
+            check('GluestackProvider exists', () =>
+              fileExists(ctx.projectDir, 'src/providers/ui/gluestack/GluestackProvider.tsx')),
+          ]
+
+      const componentChecks = [
+        check('Card component exists', () =>
+          fileExists(ctx.projectDir, 'src/components/Card.tsx')),
+        check('StatusBanner component exists', () =>
+          fileExists(ctx.projectDir, 'src/components/StatusBanner.tsx')),
+        check('PrimaryButton component exists', () =>
+          fileExists(ctx.projectDir, 'src/components/PrimaryButton.tsx')),
+      ]
+
+      const checks = await Promise.all([...sharedChecks, ...libraryChecks, ...componentChecks])
+
+      return {
+        passed: checks.every((c) => c.passed),
+        checks,
+      }
+    },
+  }
 }

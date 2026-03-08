@@ -28,10 +28,22 @@ async function validateCore(ctx: PackContext): Promise<ValidationResult> {
     check('tsconfig.json exists', () => fileExists(ctx.projectDir, 'tsconfig.json')),
     check('app.json exists', () => fileExists(ctx.projectDir, 'app.json')),
     check('Root layout exists', () => fileExists(ctx.projectDir, 'app/_layout.tsx')),
+    check('Entry screen exists', () => fileExists(ctx.projectDir, 'app/index.tsx')),
     check('Onboarding layout exists', () => fileExists(ctx.projectDir, 'app/(onboarding)/_layout.tsx')),
+    check('Onboarding welcome screen exists', () => fileExists(ctx.projectDir, 'app/(onboarding)/welcome.tsx')),
+    check('Onboarding features screen exists', () => fileExists(ctx.projectDir, 'app/(onboarding)/features.tsx')),
+    check('Onboarding get-started screen exists', () => fileExists(ctx.projectDir, 'app/(onboarding)/get-started.tsx')),
     check('App tab layout exists', () => fileExists(ctx.projectDir, 'app/(app)/_layout.tsx')),
+    check('Home screen exists', () => fileExists(ctx.projectDir, 'app/(app)/index.tsx')),
+    check('Profile screen exists', () => fileExists(ctx.projectDir, 'app/(app)/profile.tsx')),
+    check('Settings screen exists', () => fileExists(ctx.projectDir, 'app/(app)/settings.tsx')),
     check('Onboarding store exists', () => fileExists(ctx.projectDir, 'src/store/onboarding.ts')),
+    check('Theme store exists', () => fileExists(ctx.projectDir, 'src/store/theme.ts')),
+    check('Store barrel export exists', () => fileExists(ctx.projectDir, 'src/store/index.ts')),
     check('Query client exists', () => fileExists(ctx.projectDir, 'src/lib/query-client.ts')),
+    check('UI provider resolver exists', () => fileExists(ctx.projectDir, 'src/providers/ui/index.ts')),
+    check('Auth provider resolver exists', () => fileExists(ctx.projectDir, 'src/providers/auth/index.ts')),
+    check('Payments provider resolver exists', () => fileExists(ctx.projectDir, 'src/providers/payments/index.ts')),
   ])
 
   return {

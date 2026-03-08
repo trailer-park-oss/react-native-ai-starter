@@ -1,5 +1,8 @@
-import { describe, it, expect } from 'vitest'
-import { validateConfig } from '@/utils/validation.js'
+import { describe, it, expect, afterEach } from 'vitest'
+import { mkdir, rm, writeFile } from 'node:fs/promises'
+import path from 'node:path'
+import os from 'node:os'
+import { validateConfig, resolveProjectPath } from '@/utils/validation.js'
 import type { StarterConfig } from '@/types.js'
 import { DEFAULT_CONFIG } from '@/config.js'
 
@@ -42,5 +45,126 @@ describe('validateConfig', () => {
   it('rejects invalid preset value', () => {
     const config = { ...DEFAULT_CONFIG, preset: 'ocean-red' as StarterConfig['preset'] }
     expect(() => validateConfig(config)).toThrow('Invalid value "ocean-red" for --preset')
+  })
+})
+
+describe('resolveProjectPath', () => {
+  let tmpDir: string
+
+  afterEach(async () => {
+    if (tmpDir) await rm(tmpDir, { recursive: true, force: true })
+  })
+
+  it('resolves a plain name to cwd/name', async () => {
+    tmpDir = path.join(os.tmpdir(), `rn-resolve-${Date.now()}`)
+    await mkdir(tmpDir, { recursive: true })
+
+    const result = await resolveProjectPath(path.join(tmpDir, 'my-app'))
+    expect(result.projectName).toBe('my-app')
+    expect(result.projectDir).toBe(path.join(tmpDir, 'my-app'))
+  })
+
+  it('resolves a nested relative path and derives name from basename', async () => {
+    tmpDir = path.join(os.tmpdir(), `rn-resolve-${Date.now()}`)
+    const nestedParent = path.join(tmpDir, 'projects')
+    await mkdir(nestedParent, { recursive: true })
+
+    const result = await resolveProjectPath(path.join(nestedParent, 'cool-app'))
+    expect(result.projectName).toBe('cool-app')
+    expect(result.projectDir).toBe(path.join(nestedParent, 'cool-app'))
+  })
+
+  it('resolves an absolute path', async () => {
+    tmpDir = path.join(os.tmpdir(), `rn-resolve-${Date.now()}`)
+    await mkdir(tmpDir, { recursive: true })
+    const absPath = path.join(tmpDir, 'abs-app')
+
+    const result = await resolveProjectPath(absPath)
+    expect(result.projectName).toBe('abs-app')
+    expect(result.projectDir).toBe(absPath)
+  })
+
+  it('accepts valid project names', async () => {
+    tmpDir = path.join(os.tmpdir(), `rn-resolve-${Date.now()}`)
+    await mkdir(tmpDir, { recursive: true })
+
+    for (const name of ['my-app', 'MyApp', 'app123', 'my_app']) {
+      const result = await resolveProjectPath(path.join(tmpDir, name))
+      expect(result.projectName).toBe(name)
+    }
+  })
+
+  it('rejects names starting with a number', async () => {
+    tmpDir = path.join(os.tmpdir(), `rn-resolve-${Date.now()}`)
+    await mkdir(tmpDir, { recursive: true })
+
+    await expect(resolveProjectPath(path.join(tmpDir, '123app'))).rejects.toThrow(
+      'Invalid project name',
+    )
+  })
+
+  it('rejects names starting with a hyphen', async () => {
+    tmpDir = path.join(os.tmpdir(), `rn-resolve-${Date.now()}`)
+    await mkdir(tmpDir, { recursive: true })
+
+    await expect(resolveProjectPath(path.join(tmpDir, '-my-app'))).rejects.toThrow(
+      'Invalid project name',
+    )
+  })
+
+  it('rejects names with special characters', async () => {
+    tmpDir = path.join(os.tmpdir(), `rn-resolve-${Date.now()}`)
+    await mkdir(tmpDir, { recursive: true })
+
+    await expect(resolveProjectPath(path.join(tmpDir, 'my.app'))).rejects.toThrow(
+      'Invalid project name',
+    )
+  })
+
+  it('rejects when target directory already exists', async () => {
+    tmpDir = path.join(os.tmpdir(), `rn-resolve-${Date.now()}`)
+    await mkdir(tmpDir, { recursive: true })
+    const existing = path.join(tmpDir, 'existing-project')
+    await mkdir(existing, { recursive: true })
+
+    await expect(resolveProjectPath(existing)).rejects.toThrow('already exists')
+  })
+
+  it('rejects when parent directory does not exist', async () => {
+    tmpDir = path.join(os.tmpdir(), `rn-resolve-${Date.now()}`)
+    await mkdir(tmpDir, { recursive: true })
+
+    await expect(
+      resolveProjectPath(path.join(tmpDir, 'no-such-parent', 'my-app')),
+    ).rejects.toThrow('does not exist')
+  })
+
+  it('allows "." in an empty directory', async () => {
+    tmpDir = path.join(os.tmpdir(), `rn-resolve-${Date.now()}-emptydir`)
+    await mkdir(tmpDir, { recursive: true })
+
+    const origCwd = process.cwd()
+    process.chdir(tmpDir)
+    try {
+      const result = await resolveProjectPath('.')
+      expect(result.projectDir).toBe(path.resolve('.'))
+      expect(result.projectName).toBe(path.basename(tmpDir))
+    } finally {
+      process.chdir(origCwd)
+    }
+  })
+
+  it('rejects "." in a non-empty directory', async () => {
+    tmpDir = path.join(os.tmpdir(), `rn-resolve-${Date.now()}-notempty`)
+    await mkdir(tmpDir, { recursive: true })
+    await writeFile(path.join(tmpDir, 'somefile.txt'), 'hi')
+
+    const origCwd = process.cwd()
+    process.chdir(tmpDir)
+    try {
+      await expect(resolveProjectPath('.')).rejects.toThrow('not empty')
+    } finally {
+      process.chdir(origCwd)
+    }
   })
 })

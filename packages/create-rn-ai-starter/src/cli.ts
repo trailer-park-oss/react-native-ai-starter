@@ -2,7 +2,7 @@ import { Command } from 'commander'
 import { select } from '@inquirer/prompts'
 import { DEFAULT_CONFIG, ALLOWED_VALUES } from '@/config.js'
 import { runGenerator } from '@/generator.js'
-import { validateProjectName, validateConfig } from '@/utils/validation.js'
+import { resolveProjectPath, validateConfig } from '@/utils/validation.js'
 import { createLogger } from '@/utils/logger.js'
 import type { StarterConfig } from '@/types.js'
 
@@ -10,17 +10,17 @@ export async function run(): Promise<void> {
   const program = new Command()
     .name('create-rn-ai-starter')
     .description('Scaffold an Expo React Native project with modular feature packs')
-    .argument('<project-name>', 'Name of the project to create')
+    .argument('<project-path>', 'Name or path for the new project (e.g. my-app, ./projects/my-app, .)')
     .option('--ui <provider>', `UI library: ${ALLOWED_VALUES.ui.join(' | ')}`)
     .option('--auth <provider>', `Auth provider: ${ALLOWED_VALUES.auth.join(' | ')}`)
     .option('--payments <provider>', `Payments provider: ${ALLOWED_VALUES.payments.join(' | ')}`)
     .option('--dx <profile>', `DX profile: ${ALLOWED_VALUES.dx.join(' | ')}`)
     .option('--preset <theme>', `Theme preset: ${ALLOWED_VALUES.preset.join(' | ')}`)
     .option('--yes', 'Skip interactive prompts, use defaults for unset flags')
-    .action(async (projectName: string, opts: Record<string, string | boolean | undefined>) => {
+    .action(async (projectPath: string, opts: Record<string, string | boolean | undefined>) => {
       const logger = createLogger()
 
-      await validateProjectName(projectName, process.cwd())
+      const { projectName, projectDir } = await resolveProjectPath(projectPath)
 
       const partial: Partial<StarterConfig> = {}
       if (opts['ui']) partial.ui = opts['ui'] as StarterConfig['ui']
@@ -35,7 +35,7 @@ export async function run(): Promise<void> {
 
       validateConfig(config)
 
-      await runGenerator(projectName, config, logger)
+      await runGenerator(projectName, projectDir, config, logger)
     })
 
   await program.parseAsync(process.argv)
