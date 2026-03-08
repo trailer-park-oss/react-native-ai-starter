@@ -1,0 +1,54 @@
+import { Tabs } from 'expo-router'
+<% if (hasAuth) { -%>
+import { AuthGate } from '@/providers/auth/AuthGate'
+<% } -%>
+
+export default function AppLayout() {
+<% if (hasAuth) { -%>
+  return (
+    <AuthGate>
+      <Tabs
+        screenOptions={{
+          headerShown: true,
+          tabBarActiveTintColor: '#000',
+        }}
+      >
+        <Tabs.Screen
+          name="index"
+          options={{ title: 'Home', tabBarLabel: 'Home' }}
+        />
+        <Tabs.Screen
+          name="profile"
+          options={{ title: 'Profile', tabBarLabel: 'Profile' }}
+        />
+        <Tabs.Screen
+          name="settings"
+          options={{ title: 'Settings', tabBarLabel: 'Settings' }}
+        />
+      </Tabs>
+    </AuthGate>
+  )
+<% } else { -%>
+  return (
+    <Tabs
+      screenOptions={{
+        headerShown: true,
+        tabBarActiveTintColor: '#000',
+      }}
+    >
+      <Tabs.Screen
+        name="index"
+        options={{ title: 'Home', tabBarLabel: 'Home' }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{ title: 'Profile', tabBarLabel: 'Profile' }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{ title: 'Settings', tabBarLabel: 'Settings' }}
+      />
+    </Tabs>
+  )
+<% } -%>
+}

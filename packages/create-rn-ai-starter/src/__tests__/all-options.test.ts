@@ -327,14 +327,14 @@ describe('auth axis — clerk', () => {
     expect(content).toContain('Stack')
   })
 
-  it('auth provider resolver imports clerk', async () => {
+  it('auth barrel export re-exports useAuth and types', async () => {
     tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-auth-clerk-'))
     await renderFullProject(tmpDir, { ...DEFAULT_CONFIG, auth: 'clerk' })
 
     const content = await readFile(path.join(tmpDir, 'src/providers/auth/index.ts'), 'utf-8')
-    expect(content).toContain("case 'clerk':")
-    expect(content).toContain("import('@/providers/auth/clerk')")
-    expect(content).toContain("starterConfig")
+    expect(content).toContain('useAuth')
+    expect(content).toContain('AuthProvider')
+    expect(content).toContain('signInSchema')
   })
 
   it('starter.config.ts has auth: clerk', async () => {
@@ -549,8 +549,8 @@ describe('cross-cutting — maximal config (all features enabled)', () => {
     expect(layout).toContain('ThemeProvider')
     expect(layout).toContain('QueryClientProvider')
 
-    const authResolver = await readFile(path.join(tmpDir, 'src/providers/auth/index.ts'), 'utf-8')
-    expect(authResolver).toContain("case 'clerk':")
+    const authBarrel = await readFile(path.join(tmpDir, 'src/providers/auth/index.ts'), 'utf-8')
+    expect(authBarrel).toContain('useAuth')
 
     const payResolver = await readFile(path.join(tmpDir, 'src/providers/payments/index.ts'), 'utf-8')
     expect(payResolver).toContain("case 'stripe':")
@@ -633,8 +633,8 @@ describe('cross-cutting — gluestack + clerk + stripe', () => {
     const themeProvider = await readFile(path.join(tmpDir, 'src/design-system/ThemeProvider.tsx'), 'utf-8')
     expect(themeProvider).toContain('GluestackAdapter')
 
-    const authResolver = await readFile(path.join(tmpDir, 'src/providers/auth/index.ts'), 'utf-8')
-    expect(authResolver).toContain("case 'clerk':")
+    const authBarrel = await readFile(path.join(tmpDir, 'src/providers/auth/index.ts'), 'utf-8')
+    expect(authBarrel).toContain('useAuth')
 
     const payResolver = await readFile(path.join(tmpDir, 'src/providers/payments/index.ts'), 'utf-8')
     expect(payResolver).toContain("case 'stripe':")

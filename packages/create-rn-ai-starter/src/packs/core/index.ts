@@ -96,7 +96,6 @@ export const corePack: FeaturePack = {
     'src/store/',
     'src/lib/',
     'src/providers/ui/index.ts',
-    'src/providers/auth/index.ts',
     'src/providers/payments/index.ts',
   ],
   generate: generateCore,

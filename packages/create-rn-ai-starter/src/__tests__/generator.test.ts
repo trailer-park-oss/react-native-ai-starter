@@ -468,7 +468,7 @@ describe('package.json generation', () => {
     const result = mergePackDependencies(base, packs)
 
     const allDeps = { ...result.dependencies, ...result.devDependencies }
-    expect(allDeps).not.toHaveProperty('@clerk/clerk-expo')
+    expect(allDeps).not.toHaveProperty('@clerk/expo')
     expect(allDeps).not.toHaveProperty('@stripe/stripe-react-native')
   })
 

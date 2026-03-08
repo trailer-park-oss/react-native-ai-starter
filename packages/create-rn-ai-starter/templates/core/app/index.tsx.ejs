@@ -1,0 +1,25 @@
+import { Redirect } from 'expo-router'
+import { useOnboardingStore } from '@/store/onboarding'
+<% if (hasAuth) { -%>
+import { useAuth } from '@/providers/auth/useAuth'
+<% } -%>
+
+export default function EntryScreen() {
+  const { hasCompletedOnboarding } = useOnboardingStore()
+<% if (hasAuth) { -%>
+  const { isAuthenticated, isLoading } = useAuth()
+
+  if (!hasCompletedOnboarding) {
+    return <Redirect href="/(onboarding)/welcome" />
+  }
+
+  if (isLoading) return null
+
+  return <Redirect href={isAuthenticated ? '/(app)' : '/(auth)/sign-in'} />
+<% } else { -%>
+
+  return (
+    <Redirect href={hasCompletedOnboarding ? '/(app)' : '/(onboarding)/welcome'} />
+  )
+<% } -%>
+}

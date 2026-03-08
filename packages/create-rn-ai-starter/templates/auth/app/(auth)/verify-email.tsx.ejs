@@ -1,0 +1,214 @@
+import { useState, useRef, useEffect, useCallback } from 'react'
+import { <%= uiKit.VStack %>, Text } from '<%= uiKit.lib %>'
+import { TextInput, Pressable } from 'react-native'
+import { useRouter } from 'expo-router'
+import { useAuth } from '@/providers/auth/useAuth'
+import { useTokens } from '@/design-system'
+import type { AuthError } from '@/providers/auth/auth.interface'
+
+const CODE_LENGTH = 6
+const RESEND_COOLDOWN_SECONDS = 60
+
+export default function VerifyEmailScreen() {
+  const router = useRouter()
+  const { verifyEmailCode, resendVerificationCode } = useAuth()
+  const { colors, typography, spacing, radius } = useTokens()
+
+  const [digits, setDigits] = useState<string[]>(Array(CODE_LENGTH).fill(''))
+  const [authError, setAuthError] = useState<AuthError | null>(null)
+  const [isVerifying, setIsVerifying] = useState(false)
+  const [cooldown, setCooldown] = useState(0)
+  const inputRefs = useRef<Array<TextInput | null>>([])
+
+  useEffect(() => {
+    if (cooldown <= 0) return
+    const timer = setTimeout(() => setCooldown((c) => c - 1), 1000)
+    return () => clearTimeout(timer)
+  }, [cooldown])
+
+  const submitCode = useCallback(async (code: string) => {
+    setIsVerifying(true)
+    setAuthError(null)
+    try {
+      const result = await verifyEmailCode({ code })
+      setIsVerifying(false)
+
+      if (result.success) {
+        router.replace('/')
+      } else {
+        setAuthError(result.error)
+        setDigits(Array(CODE_LENGTH).fill(''))
+        inputRefs.current[0]?.focus()
+      }
+    } catch {
+      setIsVerifying(false)
+      setAuthError({ code: 'UNKNOWN', message: 'Verification failed' })
+    }
+  }, [verifyEmailCode, router])
+
+  const handleDigitChange = (index: number, value: string) => {
+    const cleaned = value.replace(/\D/g, '')
+
+    // Handle paste of full code
+    if (cleaned.length >= CODE_LENGTH) {
+      const pastedDigits = cleaned.slice(0, CODE_LENGTH).split('')
+      setDigits(pastedDigits)
+      inputRefs.current[CODE_LENGTH - 1]?.focus()
+      void submitCode(pastedDigits.join(''))
+      return
+    }
+
+    const digit = cleaned.slice(-1)
+    setDigits((prev) => {
+      const next = [...prev]
+      next[index] = digit
+
+      const code = next.join('')
+      if (code.length === CODE_LENGTH && next.every((d) => d !== '')) {
+        void submitCode(code)
+      }
+      return next
+    })
+
+    if (digit && index < CODE_LENGTH - 1) {
+      inputRefs.current[index + 1]?.focus()
+    }
+  }
+
+  const handleKeyPress = (index: number, key: string) => {
+    if (key === 'Backspace' && !digits[index] && index > 0) {
+      setDigits((prev) => {
+        const next = [...prev]
+        next[index - 1] = ''
+        return next
+      })
+      inputRefs.current[index - 1]?.focus()
+    }
+  }
+
+  const handleResend = async () => {
+    if (cooldown > 0) return
+    setAuthError(null)
+    try {
+      await resendVerificationCode({ email: '' })
+      setCooldown(RESEND_COOLDOWN_SECONDS)
+    } catch {
+      setAuthError({ code: 'UNKNOWN', message: 'Failed to resend code' })
+    }
+  }
+
+  return (
+    <<%= uiKit.VStack %>
+      style={{
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: spacing.lg,
+        backgroundColor: colors.background,
+      }}
+    >
+      <Text
+        style={{
+          fontSize: typography.headingLarge.fontSize,
+          fontWeight: typography.headingLarge.fontWeight,
+          color: colors.text,
+          marginBottom: spacing.xs,
+        }}
+      >
+        Verify your email
+      </Text>
+      <Text
+        style={{
+          fontSize: typography.body.fontSize,
+          color: colors.textSubtle,
+          textAlign: 'center',
+          marginBottom: spacing.xl,
+        }}
+      >
+        Enter the 6-digit code sent to your email
+      </Text>
+
+      {authError && (
+        <<%= uiKit.VStack %>
+          style={{
+            backgroundColor: colors.criticalSubtle,
+            padding: spacing.md,
+            borderRadius: radius.md,
+            marginBottom: spacing.md,
+            width: '100%',
+          }}
+        >
+          <Text style={{ color: colors.critical, fontSize: typography.body.fontSize, textAlign: 'center' }}>
+            {authError.message}
+          </Text>
+        </<%= uiKit.VStack %>>
+      )}
+
+      <<%= uiKit.VStack %>
+        style={{
+          flexDirection: 'row',
+          gap: spacing.sm,
+          marginBottom: spacing.xl,
+        }}
+      >
+        {digits.map((digit, index) => (
+          <TextInput
+            key={index}
+            ref={(ref) => { inputRefs.current[index] = ref }}
+            value={digit}
+            onChangeText={(value) => handleDigitChange(index, value)}
+            onKeyPress={({ nativeEvent }) => handleKeyPress(index, nativeEvent.key)}
+            keyboardType="number-pad"
+            maxLength={CODE_LENGTH}
+            editable={!isVerifying}
+            style={{
+              width: 48,
+              height: 56,
+              borderWidth: 2,
+              borderColor: digit ? colors.primary : colors.border,
+              borderRadius: radius.md,
+              textAlign: 'center',
+              fontSize: typography.heading.fontSize,
+              fontWeight: typography.heading.fontWeight,
+              color: colors.text,
+              backgroundColor: colors.surface,
+            }}
+          />
+        ))}
+      </<%= uiKit.VStack %>>
+
+      {isVerifying && (
+        <Text
+          style={{
+            fontSize: typography.body.fontSize,
+            color: colors.textSubtle,
+            marginBottom: spacing.md,
+          }}
+        >
+          Verifying...
+        </Text>
+      )}
+
+      <Pressable onPress={handleResend} disabled={cooldown > 0}>
+        <Text
+          style={{
+            fontSize: typography.body.fontSize,
+            color: cooldown > 0 ? colors.textSubtle : colors.primary,
+            fontWeight: '500',
+          }}
+        >
+          {cooldown > 0 ? `Resend code in ${cooldown}s` : 'Resend code'}
+        </Text>
+      </Pressable>
+
+      <Pressable
+        onPress={() => router.back()}
+        style={{ marginTop: spacing.lg }}
+      >
+        <Text style={{ color: colors.textSubtle, fontSize: typography.body.fontSize }}>
+          Go back
+        </Text>
+      </Pressable>
+    </<%= uiKit.VStack %>>
+  )
+}
