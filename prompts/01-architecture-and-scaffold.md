@@ -1,90 +1,122 @@
-# Prompt 1: Architecture & Scaffold
+# Prompt 1: CLI Core Architecture & Generator Scaffold
 
-You are a senior React Native architect. Your task is to design the foundational architecture and project scaffold for a production-grade Expo-based React Native starter kit targeting iOS and Android only.
+You are a senior React Native architect and CLI tooling engineer. Your task is to design the core architecture for a **new-project-only** Expo React Native starter CLI.
 
 ## Context
-This is the first prompt in a series of 5. This prompt focuses exclusively on project structure, navigation, state management, and module boundaries. Design tokens, auth, payments, and CI are handled in later prompts — do NOT design those here. Instead, leave clearly marked integration points for them.
+This is Prompt 1 in a series of 5. This prompt defines the CLI core, project scaffold, routing/state foundations, and feature-pack plugin contracts. UI/auth/payments/DX pack implementation details are handled in Prompts 2-5.
 
 ## Hard Requirements
 
-### Expo & Navigation
-1. Use Expo SDK (latest stable) with Expo Router for file-based routing.
-2. Define the route structure for these screens (content will be filled later):
-   - Splash screen (app entry)
-   - Onboarding flow (2-3 swipeable screens)
-   - Auth screens (login, signup, forgot password — layout only, logic comes in Prompt 3)
-   - Main app shell with bottom tab navigation (Home, Profile, Settings)
-3. Use Expo Router's layout groups to separate (auth), (onboarding), and (app) route groups.
+### CLI Scope
+1. The CLI creates **new projects only** (no in-place modification of existing apps).
+2. Command shape must be:
+   - `create-rn-ai-starter <project-name>`
+   - Flags: `--ui tamagui|gluestack`, `--auth clerk|none`, `--payments stripe|none`, `--dx basic|full`, `--preset neutral-green|fluent-blue`, `--yes`
+3. The CLI must install dependencies **only** for selected feature packs.
+4. The CLI must generate files **only** for selected feature packs.
+
+### Project Structure & Routing
+1. Use Expo SDK (latest stable) with Expo Router.
+2. Explicitly allow a root-level `app/` directory for Expo Router.
+3. All non-router source code must live under `src/`.
+4. Route groups must include `(onboarding)` and `(app)`, with `(auth)` generated only when auth pack is enabled.
+5. Base routes required:
+   - Splash/entry handling
+   - Onboarding flow (2-3 screens)
+   - Main tab shell (Home, Profile, Settings)
 
 ### State Management
 1. Use Zustand for client state.
-2. Use TanStack Query (React Query) for server/async state.
-3. Define where each is used — do not mix responsibilities.
+2. Use TanStack Query for server/async state.
+3. Clearly define responsibilities and avoid overlap.
 
-### Module Boundaries
-1. The project must support swappable "provider" modules for:
-   - UI library (default: Tamagui, alternative: Gluestack)
-   - Auth provider (default: Clerk — implemented in Prompt 3)
-   - Payments provider (default: Stripe — implemented in Prompt 4)
-2. Each provider category must have:
-   - A TypeScript interface/contract file (e.g., `providers/auth/auth.interface.ts`)
-   - An `index.ts` barrel that re-exports the active provider
-   - A config entry in a root `starter.config.ts` that selects the active provider
-3. Provider-specific code must live in its own subdirectory (e.g., `providers/auth/clerk/`). No provider-specific imports outside that subdirectory.
+### Feature-Pack Plugin System
+1. Define pack registry with deterministic application order:
+   - `core` (always), then `ui`, `auth`, `payments`, `dx`
+2. Each pack contract must include:
+   - `dependencies`
+   - `devDependencies`
+   - `files/templates`
+   - `postApplyValidation`
+3. Enforce ownership boundaries so packs only touch declared integration points.
 
-### TypeScript & Folder Conventions
-1. Strict TypeScript (`strict: true`, `noUncheckedIndexedAccess: true`).
-2. Use path aliases (`@/` -> `src/`).
-3. All source code lives under `src/`.
+### Provider Selection Mechanism
+1. `starter.config.ts` controls selected providers and modes.
+2. Use resolver/factory modules keyed by config values.
+3. Do **not** require impossible conditional re-exports.
+4. Selection is build-time/import-time in generated code (not runtime toggle UI).
 
-### Selection Mechanism
-1. The `starter.config.ts` file at the project root controls which providers are active:
+### TypeScript & Conventions
+1. `strict: true`, `noUncheckedIndexedAccess: true`.
+2. Path alias `@/* -> src/*`.
+3. Output examples must be valid TypeScript.
+
+## Required `starter.config.ts` Shape
+
 ```ts
-export const starterConfig = {
-  ui: 'tamagui' | 'gluestack',
-  auth: 'clerk',       // extensible later
-  payments: 'stripe',  // extensible later
-} as const;
+export type UiProvider = 'tamagui' | 'gluestack'
+export type AuthProvider = 'clerk' | 'none'
+export type PaymentsProvider = 'stripe' | 'none'
+export type DxProfile = 'basic' | 'full'
+export type ThemePreset = 'neutral-green' | 'fluent-blue'
+
+export interface StarterConfig {
+  ui: UiProvider
+  auth: AuthProvider
+  payments: PaymentsProvider
+  dx: DxProfile
+  preset: ThemePreset
+}
+
+export const starterConfig: StarterConfig = {
+  ui: 'tamagui',
+  auth: 'none',
+  payments: 'none',
+  dx: 'basic',
+  preset: 'neutral-green',
+}
 ```
-2. Provider barrel files read from this config to re-export the correct implementation.
-3. This is a build-time/import-time selection, NOT runtime toggling. Unused providers can be tree-shaken or removed by the developer.
 
 ## Output Format (Required)
 Return your answer in this exact structure:
 
 ### 1. Executive Summary
-- One paragraph on the architectural approach and key decisions.
+- One paragraph on the CLI-first architecture.
 
-### 2. Complete File/Folder Tree
-- Full tree from project root, including every directory and placeholder file.
-- Annotate directories with one-line descriptions.
-- Include empty placeholder files where later prompts will fill content (mark them with `# TODO: Prompt N`).
+### 2. Generator Lifecycle
+- Step-by-step generation flow from argument parsing to final validation.
 
-### 3. starter.config.ts
-- Full file contents with types and defaults.
+### 3. Complete File/Folder Tree
+- Full root tree.
+- Mark pack-owned files and core-owned files.
+- Mark optional files with `(generated when enabled)`.
 
-### 4. Provider Interface Files
-- `providers/auth/auth.interface.ts` — full type definitions for auth provider contract.
-- `providers/payments/payments.interface.ts` — full type definitions for payments provider contract.
-- `providers/ui/ui.interface.ts` — full type definitions for UI provider contract (theme config shape, component overrides).
+### 4. Core TypeScript Files
+- `starter.config.ts`
+- `src/cli/pack-registry.ts`
+- `src/cli/generator.ts`
+- `src/cli/types.ts`
 
-### 5. Provider Barrel Files
-- `providers/auth/index.ts` — conditional re-export based on config.
-- `providers/payments/index.ts` — conditional re-export based on config.
-- `providers/ui/index.ts` — conditional re-export based on config.
+### 5. Provider Resolver Pattern
+- `src/providers/ui/index.ts`
+- `src/providers/auth/index.ts`
+- `src/providers/payments/index.ts`
+- Show resolver/factory implementation (no conditional re-export language).
 
-### 6. Expo Router Layout Files
-- `app/_layout.tsx` — root layout with providers wrapped.
+### 6. Expo Router Layout Foundation
+- `app/_layout.tsx`
 - `app/(onboarding)/_layout.tsx`
-- `app/(auth)/_layout.tsx`
-- `app/(app)/_layout.tsx` — tab navigator setup.
-- Show the navigation guard logic: splash -> onboarding (if first launch) -> auth (if not logged in) -> app.
+- `app/(app)/_layout.tsx`
+- `app/(auth)/_layout.tsx` as optional.
 
-### 7. State Management Setup
-- `src/store/` — Zustand store boilerplate (app state: onboarding complete, theme preference).
-- `src/lib/query-client.ts` — TanStack Query client configuration.
+### 7. State Foundation
+- `src/store/` bootstrap for onboarding + theme preset.
+- `src/lib/query-client.ts`.
 
-### 8. Key Architectural Decisions
-- Table format: Decision | Chosen Option | Rationale | Alternatives Considered.
+### 8. Architectural Decisions Table
+- Decision | Chosen Option | Rationale | Rejected Alternative.
 
-Be concrete. Every file must have real, working TypeScript content or a clear TODO marker. No vague descriptions.
+### 9. Generation Invariants
+- Explicit checklist proving selective dependency/file generation.
+
+Be concrete. Every file must contain valid TypeScript/TSX or a clear TODO marker tied to Prompt 2-5 pack implementation.

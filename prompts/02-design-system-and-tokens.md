@@ -1,111 +1,75 @@
-# Prompt 2: Design System & Tokens
+# Prompt 2: UI Pack - Design System & Tokens
 
-You are a senior mobile design systems engineer. Your task is to design the complete design token system and theme presets for a React Native starter kit built with Expo.
+You are a senior mobile design systems engineer. Your task is to define the **UI feature pack** for the CLI starter, including canonical tokens and library adapters.
 
 ## Context
-This is Prompt 2 in a series of 5. Prompt 1 established the project scaffold with a `providers/ui/` module boundary and a `starter.config.ts` that selects either `tamagui` or `gluestack` as the UI library. Your job is to define the shared design tokens consumed by both UI systems, two visual presets, and the mapping layer that bridges tokens to each library.
-
-## Constraints
-- This is a mobile-only project (iOS + Android). No web components, no Shopify Polaris, no Fluent UI packages. The presets are original color palettes loosely inspired by those aesthetics — not ports or wrappers.
-- All tokens and theme files go under `src/design-system/`.
-- Both UI libraries must consume the same canonical token definitions so switching UI lib doesn't change the visual identity.
+Prompt 1 defined the CLI core and pack model. This prompt applies only when `--ui` is selected (`tamagui` or `gluestack`).
 
 ## Hard Requirements
 
-### Token Categories
-Define semantic tokens for these categories:
+### Pack Enablement Rules
+1. This prompt describes generation only for selected UI provider(s).
+2. If UI pack is disabled (not possible in defaults, but future-compatible), no UI adapter dependencies/files are generated.
 
-**Colors:**
-- `background` — app/screen background
-- `backgroundSubtle` — secondary background (e.g., grouped list sections)
-- `surface` — card/container background
-- `surfaceRaised` — elevated surface (modal, popover)
-- `text` — primary text
-- `textSubtle` — secondary/muted text
-- `textOnPrimary` — text on primary-colored backgrounds
-- `border` — default border
-- `borderSubtle` — lighter/less prominent border
-- `primary` — brand/action color
-- `primaryHover` — pressed/active state of primary (name it `primaryPressed` since mobile has no hover)
-- `success`, `warning`, `critical`, `info` — semantic status colors
-- `successSubtle`, `warningSubtle`, `criticalSubtle`, `infoSubtle` — tinted backgrounds for status banners
+### Canonical Token Source of Truth
+1. Canonical tokens live in `src/design-system/tokens.ts`.
+2. Token categories:
+   - Colors: `background`, `backgroundSubtle`, `surface`, `surfaceRaised`, `text`, `textSubtle`, `textOnPrimary`, `border`, `borderSubtle`, `primary`, `primaryPressed`, `success`, `warning`, `critical`, `info`, `successSubtle`, `warningSubtle`, `criticalSubtle`, `infoSubtle`
+   - Spacing: `xs`, `sm`, `md`, `lg`, `xl`, `2xl`, `3xl`
+   - Radius: `sm`, `md`, `lg`, `xl`, `full`
+   - Typography: `caption`, `body`, `bodyLarge`, `heading`, `headingLarge`, `display`
+3. Provide concrete values for two presets in both modes:
+   - `neutral-green` (light/dark)
+   - `fluent-blue` (light/dark)
 
-**Spacing:**
-- Scale: `xs` (4), `sm` (8), `md` (12), `lg` (16), `xl` (24), `2xl` (32), `3xl` (48)
+### Adapter Boundaries
+1. Canonical tokens remain in `src/design-system/`.
+2. Library-specific adapters/configs live in:
+   - `src/providers/ui/tamagui/`
+   - `src/providers/ui/gluestack/`
+3. Switching library must not require changing token values.
 
-**Border Radius:**
-- `sm` (4), `md` (8), `lg` (12), `xl` (16), `full` (9999)
+### Runtime Theme Resolution
+1. `ThemeProvider` at `src/design-system/ThemeProvider.tsx` must:
+   - Read preset from Zustand
+   - Read mode via `useColorScheme()`
+   - Resolve tokens and pass them to active UI provider
+2. Runtime preset switch must work without app restart.
 
-**Typography:**
-- Define a type scale: `caption`, `body`, `bodyLarge`, `heading`, `headingLarge`, `display`
-- Each entry: `{ fontSize, lineHeight, fontWeight }`
-
-### Two Visual Presets
-
-**Preset: `neutral-green`**
-- Neutral grays with green brand accent. Clean, commerce-oriented feel.
-- Provide concrete hex values for every token above in both light and dark mode.
-
-**Preset: `fluent-blue`**
-- Neutral grays with blue brand accent. Material-influenced, soft surfaces.
-- Provide concrete hex values for every token above in both light and dark mode.
-
-### Token-to-Library Mapping
-
-**Tamagui mapping:**
-- Show how each semantic token maps to Tamagui's `createTheme()` / `createTokens()` API.
-- Provide the actual `tamagui.config.ts` theme definition using the tokens.
-
-**Gluestack mapping:**
-- Show how each semantic token maps to Gluestack's `createConfig()` / theme tokens.
-- Provide the actual Gluestack config file using the tokens.
-
-### Elevation / Surface Guide (Mobile)
-For each preset, define elevation behavior for:
-- **Card** — slight shadow or border treatment, token: `surface`
-- **Modal / Bottom Sheet** — heavier shadow, token: `surfaceRaised`, overlay backdrop
-- **Pressed state** — opacity reduction or color shift (specify which and by how much)
-- **Toast / Snackbar** — elevated, uses status-subtle background tokens
-
-Provide these as React Native `StyleSheet` snippets (shadow properties for iOS, elevation for Android).
-
-### Runtime Theme Selection
-1. The active preset is stored in Zustand (from Prompt 1's `src/store/`).
-2. Provide a `ThemeProvider` component at `src/design-system/ThemeProvider.tsx` that:
-   - Reads the selected preset from the store
-   - Reads system color scheme (light/dark) via `useColorScheme()`
-   - Passes the resolved token map to the active UI library's provider
-3. Switching presets should work at runtime without app restart.
+### Mobile Elevation Guide
+1. Provide styles for card, modal/sheet, pressed state, and toast/snackbar.
+2. Include iOS shadow + Android elevation fields.
 
 ## Output Format (Required)
 
-### 1. Token Definition File
-- `src/design-system/tokens.ts` — canonical token type definitions and the complete token values for both presets, both modes (light + dark). This is the single source of truth.
+### 1. UI Pack Overview
+- Describe what files/dependencies are installed for Tamagui vs Gluestack.
 
-### 2. Color Token Tables
-- Four tables (neutral-green light, neutral-green dark, fluent-blue light, fluent-blue dark).
-- Columns: Token Name | Hex Value | Usage Description.
+### 2. Token Definition File
+- `src/design-system/tokens.ts` full code.
 
-### 3. Spacing, Radius, Typography Tables
-- One table each (shared across presets).
+### 3. Color Token Tables
+- 4 tables: neutral-green light/dark, fluent-blue light/dark.
 
-### 4. Tamagui Config
-- `src/providers/ui/tamagui/tamagui.config.ts` — full working config that imports from `tokens.ts` and creates Tamagui themes.
+### 4. Shared Scale Tables
+- spacing, radius, typography.
 
-### 5. Gluestack Config
-- `src/providers/ui/gluestack/gluestack.config.ts` — full working config that imports from `tokens.ts` and creates Gluestack themes.
+### 5. Tamagui Adapter
+- `src/providers/ui/tamagui/tamagui.config.ts` full code.
 
-### 6. ThemeProvider
-- `src/design-system/ThemeProvider.tsx` — full component code.
+### 6. Gluestack Adapter
+- `src/providers/ui/gluestack/gluestack.config.ts` full code.
 
-### 7. Elevation Styles
-- `src/design-system/elevation.ts` — cross-platform shadow/elevation styles for card, modal, toast, pressed states. One export per preset.
+### 7. Theme Provider
+- `src/design-system/ThemeProvider.tsx` full code.
 
-### 8. Token Usage Examples
-- Show 3 small component snippets demonstrating token consumption:
-  1. A styled card using `surface` + elevation
-  2. A status banner using `criticalSubtle` + `critical`
-  3. A primary button using `primary` + `primaryPressed` + `textOnPrimary`
-- Show each snippet for both Tamagui and Gluestack so the developer sees the difference.
+### 8. Elevation Styles
+- `src/design-system/elevation.ts` full code.
 
-Be concrete. Every token must have an actual hex value. Every config file must be valid TypeScript that could be dropped into the project.
+### 9. Token Usage Examples
+- Card, status banner, primary button for both Tamagui and Gluestack.
+
+### 10. Pack Invariants
+- Show how generation skips irrelevant adapter files/dependencies.
+
+Be concrete. Use `primaryPressed` only. All examples must be valid TypeScript/TSX.
