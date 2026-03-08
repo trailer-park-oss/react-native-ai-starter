@@ -13,6 +13,7 @@ export async function run(): Promise<void> {
     .argument('<project-path>', 'Name or path for the new project (e.g. my-app, ./projects/my-app, .)')
     .option('--ui <provider>', `UI library: ${ALLOWED_VALUES.ui.join(' | ')}`)
     .option('--auth <provider>', `Auth provider: ${ALLOWED_VALUES.auth.join(' | ')}`)
+    .option('--ai <provider>', `AI implementation: ${ALLOWED_VALUES.ai.join(' | ')}`)
     .option('--payments <provider>', `Payments provider: ${ALLOWED_VALUES.payments.join(' | ')}`)
     .option('--dx <profile>', `DX profile: ${ALLOWED_VALUES.dx.join(' | ')}`)
     .option('--preset <theme>', `Theme preset: ${ALLOWED_VALUES.preset.join(' | ')}`)
@@ -25,6 +26,7 @@ export async function run(): Promise<void> {
       const partial: Partial<StarterConfig> = {}
       if (opts['ui']) partial.ui = opts['ui'] as StarterConfig['ui']
       if (opts['auth']) partial.auth = opts['auth'] as StarterConfig['auth']
+      if (opts['ai']) partial.ai = opts['ai'] as StarterConfig['ai']
       if (opts['payments']) partial.payments = opts['payments'] as StarterConfig['payments']
       if (opts['dx']) partial.dx = opts['dx'] as StarterConfig['dx']
       if (opts['preset']) partial.preset = opts['preset'] as StarterConfig['preset']
@@ -57,6 +59,14 @@ async function promptForMissing(partial: Partial<StarterConfig>): Promise<Starte
       message: 'Which auth provider?',
       choices: ALLOWED_VALUES.auth.map((v) => ({ value: v, name: v })),
       default: DEFAULT_CONFIG.auth,
+    })
+  }
+
+  if (!partial.ai) {
+    config.ai = await select({
+      message: 'Which AI implementation?',
+      choices: ALLOWED_VALUES.ai.map((v) => ({ value: v, name: v })),
+      default: DEFAULT_CONFIG.ai,
     })
   }
 

@@ -22,6 +22,7 @@ function toTemplateData(projectName: string, config: StarterConfig): TemplateDat
     projectName,
     ui: config.ui,
     auth: config.auth,
+    ai: config.ai,
     payments: config.payments,
     dx: config.dx,
     preset: config.preset,

@@ -23,6 +23,7 @@ function toTemplateData(projectName: string, config: StarterConfig): TemplateDat
     projectName,
     ui: config.ui,
     auth: config.auth,
+    ai: config.ai,
     payments: config.payments,
     dx: config.dx,
     preset: config.preset,
@@ -36,6 +37,7 @@ function toTemplateData(projectName: string, config: StarterConfig): TemplateDat
 const ALL_CONFIG: StarterConfig = {
   ui: 'gluestack',
   auth: 'clerk',
+  ai: 'online-openrouter',
   payments: 'stripe',
   dx: 'full',
   preset: 'radix-blue',
@@ -86,6 +88,7 @@ describe('generator — template rendering', () => {
     const content = await readFile(path.join(tmpDir, 'src/starter.config.ts'), 'utf-8')
     expect(content).toContain("ui: 'gluestack'")
     expect(content).toContain("auth: 'clerk'")
+    expect(content).toContain("ai: 'online-openrouter'")
     expect(content).toContain("payments: 'stripe'")
     expect(content).toContain("dx: 'full'")
     expect(content).toContain("preset: 'radix-blue'")

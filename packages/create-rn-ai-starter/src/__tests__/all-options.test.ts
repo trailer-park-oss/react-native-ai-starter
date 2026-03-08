@@ -23,6 +23,7 @@ function toTemplateData(projectName: string, config: StarterConfig): TemplateDat
     projectName,
     ui: config.ui,
     auth: config.auth,
+    ai: config.ai,
     payments: config.payments,
     dx: config.dx,
     preset: config.preset,
@@ -134,11 +135,11 @@ describe('full pipeline — every config combination renders without error', () 
       for (const payments of PAYMENTS_OPTIONS) {
         for (const dx of DX_OPTIONS) {
           for (const preset of PRESET_OPTIONS) {
-            const label = `ui=${ui} auth=${auth} payments=${payments} dx=${dx} preset=${preset}`
+              const label = `ui=${ui} auth=${auth} payments=${payments} dx=${dx} preset=${preset}`
 
             it(`renders: ${label}`, async () => {
               tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-combo-'))
-              const config: StarterConfig = { ui, auth, payments, dx, preset }
+              const config: StarterConfig = { ui, auth, ai: DEFAULT_CONFIG.ai, payments, dx, preset }
               await renderFullProject(tmpDir, config)
 
               for (const f of CORE_FILES) {
@@ -519,6 +520,7 @@ describe('cross-cutting — maximal config (all features enabled)', () => {
   const maxConfig: StarterConfig = {
     ui: 'tamagui',
     auth: 'clerk',
+    ai: 'online-openrouter',
     payments: 'stripe',
     dx: 'full',
     preset: 'radix-blue',
@@ -540,6 +542,7 @@ describe('cross-cutting — maximal config (all features enabled)', () => {
     const starterConfig = await readFile(path.join(tmpDir, 'src/starter.config.ts'), 'utf-8')
     expect(starterConfig).toContain("ui: 'tamagui'")
     expect(starterConfig).toContain("auth: 'clerk'")
+    expect(starterConfig).toContain("ai: 'online-openrouter'")
     expect(starterConfig).toContain("payments: 'stripe'")
     expect(starterConfig).toContain("dx: 'full'")
     expect(starterConfig).toContain("preset: 'radix-blue'")
@@ -575,6 +578,7 @@ describe('cross-cutting — minimal config (all optional features disabled)', ()
   const minConfig: StarterConfig = {
     ui: 'tamagui',
     auth: 'none',
+    ai: 'on-device-mlkit',
     payments: 'none',
     dx: 'basic',
     preset: 'radix-green',
@@ -609,6 +613,7 @@ describe('cross-cutting — gluestack + clerk + stripe', () => {
   const config: StarterConfig = {
     ui: 'gluestack',
     auth: 'clerk',
+    ai: 'on-device-mlkit',
     payments: 'stripe',
     dx: 'full',
     preset: 'radix-green',
@@ -918,7 +923,7 @@ describe('import resolution — every dynamic import() target resolves to an exi
 
         it(`all resolver imports resolve: ${label}`, async () => {
           tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-resolve-'))
-          const config: StarterConfig = { ui, auth, payments, dx: 'basic', preset: 'radix-green' }
+          const config: StarterConfig = { ui, auth, ai: DEFAULT_CONFIG.ai, payments, dx: 'basic', preset: 'radix-green' }
           await renderFullProject(tmpDir, config)
 
           for (const resolverFile of RESOLVER_FILES) {
@@ -961,7 +966,7 @@ describe('import resolution — screen @/ imports resolve to existing modules', 
 
       it(`all screen @/ imports resolve: ${label}`, async () => {
         tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-screen-resolve-'))
-        const config: StarterConfig = { ui, auth, payments: 'none', dx: 'basic', preset: 'radix-green' }
+        const config: StarterConfig = { ui, auth, ai: DEFAULT_CONFIG.ai, payments: 'none', dx: 'basic', preset: 'radix-green' }
         await renderFullProject(tmpDir, config)
 
         const screenFiles = [

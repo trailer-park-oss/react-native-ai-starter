@@ -7,6 +7,7 @@ export interface TemplateData {
   projectName: string
   ui: string
   auth: string
+  ai: string
   payments: string
   dx: string
   preset: string

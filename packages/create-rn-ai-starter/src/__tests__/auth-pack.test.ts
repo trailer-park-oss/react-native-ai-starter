@@ -23,6 +23,7 @@ function toTemplateData(projectName: string, config: StarterConfig): TemplateDat
     projectName,
     ui: config.ui,
     auth: config.auth,
+    ai: config.ai,
     payments: config.payments,
     dx: config.dx,
     preset: config.preset,
@@ -450,6 +451,7 @@ describe('auth pack — dependencies', () => {
     const packs = getActivePacks(CLERK_CONFIG)
     const authPack = packs.find((p) => p.id === 'auth')!
     expect(authPack.dependencies).toHaveProperty('@clerk/expo')
+    expect(authPack.dependencies['@clerk/expo']).toContain('npm:@clerk/clerk-expo@')
     expect(authPack.dependencies).toHaveProperty('@hookform/resolvers')
   })
 

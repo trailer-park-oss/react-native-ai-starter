@@ -44,6 +44,7 @@ describe('CLI integration — built binary', () => {
       expect(stdout).toContain('project-path')
       expect(stdout).toContain('--ui')
       expect(stdout).toContain('--auth')
+      expect(stdout).toContain('--ai')
       expect(stdout).toContain('--payments')
       expect(stdout).toContain('--dx')
       expect(stdout).toContain('--preset')

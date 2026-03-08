@@ -35,6 +35,7 @@ npx create-rn-ai-starter .                        # scaffolds in cwd (must be em
 | --- | --- | --- |
 | `--ui <provider>` | `tamagui` \| `gluestack` | `tamagui` |
 | `--auth <provider>` | `clerk` \| `none` | `none` |
+| `--ai <provider>` | `on-device-mlkit` \| `online-openrouter` | `on-device-mlkit` |
 | `--payments <provider>` | `stripe` \| `none` | `none` |
 | `--dx <profile>` | `basic` \| `full` | `basic` |
 | `--preset <theme>` | `radix-blue` \| `radix-green` \| `radix-purple` \| `radix-orange` \| `radix-cyan` \| `radix-red` | `radix-blue` |
@@ -51,7 +52,7 @@ npx create-rn-ai-starter my-app --yes
 Pick specific providers:
 
 ```bash
-npx create-rn-ai-starter my-app --ui gluestack --auth clerk --payments stripe
+npx create-rn-ai-starter my-app --ui gluestack --auth clerk --ai online-openrouter --payments stripe
 ```
 
 Mix flags with interactive prompts for the rest:
@@ -59,6 +60,10 @@ Mix flags with interactive prompts for the rest:
 ```bash
 npx create-rn-ai-starter my-app --ui tamagui --dx full
 ```
+
+Interactive prompt order is:
+`ui -> auth -> ai -> payments -> dx -> preset`.
+The AI prompt is always shown when `--ai` is not provided, regardless of auth mode.
 
 Scaffold inside an existing projects folder:
 

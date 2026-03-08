@@ -45,6 +45,7 @@ describe('getActivePacks', () => {
     const config: StarterConfig = {
       ui: 'tamagui',
       auth: 'clerk',
+      ai: 'on-device-mlkit',
       payments: 'stripe',
       dx: 'full',
       preset: 'radix-green',
@@ -68,6 +69,7 @@ describe('pack ownership boundaries', () => {
     const allConfig: StarterConfig = {
       ui: 'tamagui',
       auth: 'clerk',
+      ai: 'on-device-mlkit',
       payments: 'stripe',
       dx: 'full',
       preset: 'radix-green',
@@ -94,6 +96,7 @@ describe('pack ownership boundaries', () => {
     const allConfig: StarterConfig = {
       ui: 'tamagui',
       auth: 'clerk',
+      ai: 'on-device-mlkit',
       payments: 'stripe',
       dx: 'full',
       preset: 'radix-green',
@@ -109,6 +112,7 @@ describe('pack ownership boundaries', () => {
     const allConfig: StarterConfig = {
       ui: 'tamagui',
       auth: 'clerk',
+      ai: 'on-device-mlkit',
       payments: 'stripe',
       dx: 'full',
       preset: 'radix-green',

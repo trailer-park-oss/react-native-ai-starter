@@ -9,6 +9,7 @@ function buildTemplateData(ctx: PackContext): TemplateData {
     projectName: ctx.projectName,
     ui: ctx.config.ui,
     auth: ctx.config.auth,
+    ai: ctx.config.ai,
     payments: ctx.config.payments,
     dx: ctx.config.dx,
     preset: ctx.config.preset,
