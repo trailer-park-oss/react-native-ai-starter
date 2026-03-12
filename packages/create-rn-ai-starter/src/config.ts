@@ -11,7 +11,7 @@ import type {
 export const ALLOWED_VALUES = {
   ui: ['tamagui', 'gluestack'] as readonly UiProvider[],
   auth: ['clerk', 'none'] as readonly AuthProvider[],
-  // ai: ['on-device-mlkit', 'online-openrouter'] as readonly AiProvider[],
+  ai: ['on-device-mlkit', 'on-device-executorch', 'online-openrouter'] as readonly AiProvider[],
   // payments: ['stripe', 'none'] as readonly PaymentsProvider[],
   // dx: ['basic', 'full'] as readonly DxProfile[],
   preset: ['radix-blue', 'radix-green', 'radix-purple', 'radix-orange', 'radix-cyan', 'radix-red'] as readonly ThemePreset[],
@@ -20,7 +20,7 @@ export const ALLOWED_VALUES = {
 export const DEFAULT_CONFIG: StarterConfig = {
   ui: 'tamagui',
   auth: 'none',
-  ai: 'online-openrouter',
+  ai: ['online-openrouter'],
   payments: 'none',
   dx: 'basic',
   preset: 'radix-blue',

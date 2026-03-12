@@ -15,7 +15,7 @@ describe('validateConfig', () => {
     const config: StarterConfig = {
       ui: 'gluestack',
       auth: 'clerk',
-      ai: 'online-openrouter',
+      ai: ['online-openrouter'],
       payments: 'stripe',
       dx: 'full',
       preset: 'radix-blue',
@@ -33,20 +33,23 @@ describe('validateConfig', () => {
     expect(() => validateConfig(config)).toThrow('Invalid value "firebase" for --auth')
   })
 
-  it('accepts valid ai value: on-device-mlkit', () => {
-    const config = { ...DEFAULT_CONFIG, ai: 'on-device-mlkit' as StarterConfig['ai'] }
+  it('accepts empty ai selection', () => {
+    const config = { ...DEFAULT_CONFIG, ai: [] }
     expect(() => validateConfig(config)).not.toThrow()
   })
 
-  // it('accepts valid ai value: online-openrouter', () => {
-  //   const config = { ...DEFAULT_CONFIG, ai: 'online-openrouter' as StarterConfig['ai'] }
-  //   expect(() => validateConfig(config)).not.toThrow()
-  // })
+  it('accepts multiple ai providers', () => {
+    const config = {
+      ...DEFAULT_CONFIG,
+      ai: ['on-device-mlkit', 'online-openrouter'],
+    }
+    expect(() => validateConfig(config)).not.toThrow()
+  })
 
-  // it('rejects invalid ai value', () => {
-  //   const config = { ...DEFAULT_CONFIG, ai: 'local-llama' as StarterConfig['ai'] }
-  //   expect(() => validateConfig(config)).toThrow('Invalid value "local-llama" for --ai')
-  // })
+  it('rejects invalid ai values inside array', () => {
+    const config = { ...DEFAULT_CONFIG, ai: ['local-llama'] as StarterConfig['ai'] }
+    expect(() => validateConfig(config)).toThrow('Invalid value "local-llama" for --ai')
+  })
 
   // it('rejects invalid payments value', () => {
   //   const config = { ...DEFAULT_CONFIG, payments: 'paypal' as StarterConfig['payments'] }

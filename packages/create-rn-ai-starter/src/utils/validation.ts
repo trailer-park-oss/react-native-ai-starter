@@ -54,9 +54,20 @@ export async function resolveProjectPath(argument: string): Promise<ResolvedProj
 export function validateConfig(config: StarterConfig): void {
   const entries = Object.entries(ALLOWED_VALUES) as [keyof StarterConfig, readonly string[]][]
   for (const [key, allowed] of entries) {
-    if (!allowed.includes(config[key])) {
+    const value = config[key]
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        if (!allowed.includes(item)) {
+          throw new Error(
+            `Invalid value "${item}" for --${key}. Allowed: ${allowed.join(', ')}`,
+          )
+        }
+      }
+      continue
+    }
+    if (!allowed.includes(value)) {
       throw new Error(
-        `Invalid value "${config[key]}" for --${key}. Allowed: ${allowed.join(', ')}`,
+        `Invalid value "${value}" for --${key}. Allowed: ${allowed.join(', ')}`,
       )
     }
   }

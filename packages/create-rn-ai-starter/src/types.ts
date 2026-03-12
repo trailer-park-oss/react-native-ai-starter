@@ -1,6 +1,6 @@
 export type UiProvider = 'tamagui' | 'gluestack'
 export type AuthProvider = 'clerk' | 'none'
-export type AiProvider = 'on-device-mlkit' | 'online-openrouter'
+export type AiProvider = 'on-device-mlkit' | 'on-device-executorch' | 'online-openrouter'
 export type PaymentsProvider = 'stripe' | 'none'
 export type DxProfile = 'basic' | 'full'
 export type ThemePreset =
@@ -14,7 +14,7 @@ export type ThemePreset =
 export interface StarterConfig {
   ui: UiProvider
   auth: AuthProvider
-  ai: AiProvider
+  ai: AiProvider[]
   payments: PaymentsProvider
   dx: DxProfile
   preset: ThemePreset
