@@ -5,6 +5,10 @@ import { fileExists } from '@/utils/fs.js'
 import { getUIKit } from '@/packs/ui/kits.js'
 
 function buildTemplateData(ctx: PackContext): TemplateData {
+  const hasMlkit = ctx.config.ai.includes('on-device-mlkit')
+  const hasExecuTorch = ctx.config.ai.includes('on-device-executorch')
+  const hasOpenRouter = ctx.config.ai.includes('online-openrouter')
+
   return {
     projectName: ctx.projectName,
     ui: ctx.config.ui,
@@ -17,6 +21,10 @@ function buildTemplateData(ctx: PackContext): TemplateData {
     hasPayments: ctx.config.payments !== 'none',
     isFullDx: ctx.config.dx === 'full',
     uiKit: getUIKit(ctx.config.ui),
+    hasAi: ctx.config.ai.length > 0,
+    hasMlkit,
+    hasExecuTorch,
+    hasOpenRouter,
   }
 }
 

@@ -5,6 +5,10 @@ import { fileExists } from '@/utils/fs.js'
 import { getUIKit } from '@/packs/ui/kits.js'
 
 function buildTemplateData(ctx: PackContext): TemplateData {
+  const hasMlkit = ctx.config.ai.includes('on-device-mlkit')
+  const hasExecuTorch = ctx.config.ai.includes('on-device-executorch')
+  const hasOpenRouter = ctx.config.ai.includes('online-openrouter')
+
   return {
     projectName: ctx.projectName,
     ui: ctx.config.ui,
@@ -17,6 +21,10 @@ function buildTemplateData(ctx: PackContext): TemplateData {
     hasPayments: ctx.config.payments !== 'none',
     isFullDx: ctx.config.dx === 'full',
     uiKit: getUIKit(ctx.config.ui),
+    hasAi: ctx.config.ai.length > 0,
+    hasMlkit,
+    hasExecuTorch,
+    hasOpenRouter,
   }
 }
 
@@ -26,20 +34,23 @@ async function check(name: string, fn: () => Promise<boolean>): Promise<Validati
 }
 
 export function createAiPack(config: StarterConfig): FeaturePack {
-  const isOpenRouter = config.ai === 'online-openrouter'
+  const hasMlkit = config.ai.includes('on-device-mlkit')
+  const hasExecuTorch = config.ai.includes('on-device-executorch')
+  const hasOpenRouter = config.ai.includes('online-openrouter')
 
-  const expoInstallPackages: string[] = isOpenRouter
-    ? ['expo-image-picker']
-    : [
-        '@infinitered/react-native-mlkit-object-detection',
-        'expo-image-picker',
-      ]
+  const expoInstallPackages = new Set<string>()
+  if (hasOpenRouter) expoInstallPackages.add('expo-image-picker')
+  if (hasMlkit) {
+    expoInstallPackages.add('@infinitered/react-native-mlkit-object-detection')
+    expoInstallPackages.add('expo-image-picker')
+  }
+  if (hasExecuTorch) expoInstallPackages.add('react-native-executorch')
 
   return {
     id: 'ai',
     dependencies: {},
     devDependencies: {},
-    expoInstallPackages,
+    expoInstallPackages: Array.from(expoInstallPackages),
     ownedPaths: [
       'src/providers/ai/',
       'app/(app)/ai.tsx',
@@ -50,12 +61,17 @@ export function createAiPack(config: StarterConfig): FeaturePack {
       ctx.logger.info('Generating shared AI provider templates')
       await renderTemplates('ai', ctx.projectDir, data)
 
-      if (isOpenRouter) {
+      if (hasOpenRouter) {
         ctx.logger.info('Generating OpenRouter AI templates')
         await renderTemplates('ai-openrouter', ctx.projectDir, data)
-      } else {
+      }
+      if (hasMlkit) {
         ctx.logger.info('Generating ML Kit AI templates')
         await renderTemplates('ai-mlkit', ctx.projectDir, data)
+      }
+      if (hasExecuTorch) {
+        ctx.logger.info('Generating ExecuTorch AI templates')
+        await renderTemplates('ai-executorch', ctx.projectDir, data)
       }
     },
     async postApplyValidation(ctx: PackContext) {
@@ -68,25 +84,39 @@ export function createAiPack(config: StarterConfig): FeaturePack {
           fileExists(ctx.projectDir, 'app/(app)/ai.tsx')),
       ]
 
-      const providerChecks = isOpenRouter
-        ? [
-            check('OpenRouter client exists', () =>
-              fileExists(ctx.projectDir, 'src/providers/ai/openrouter/client.ts')),
-            check('OpenRouter useChat hook exists', () =>
-              fileExists(ctx.projectDir, 'src/providers/ai/openrouter/useChat.ts')),
-            check('OpenRouter env config exists', () =>
-              fileExists(ctx.projectDir, 'src/providers/ai/openrouter/env.ts')),
-            check('OpenRouter barrel export exists', () =>
-              fileExists(ctx.projectDir, 'src/providers/ai/openrouter/index.ts')),
-          ]
-        : [
-            check('MLKit provider exists', () =>
-              fileExists(ctx.projectDir, 'src/providers/ai/mlkit/MLKitProvider.tsx')),
-            check('MLKit vision hook exists', () =>
-              fileExists(ctx.projectDir, 'src/providers/ai/mlkit/useVision.ts')),
-            check('MLKit barrel export exists', () =>
-              fileExists(ctx.projectDir, 'src/providers/ai/mlkit/index.ts')),
-          ]
+      const providerChecks: Promise<ValidationCheck>[] = []
+      if (hasOpenRouter) {
+        providerChecks.push(
+          check('OpenRouter client exists', () =>
+            fileExists(ctx.projectDir, 'src/providers/ai/openrouter/client.ts')),
+          check('OpenRouter useChat hook exists', () =>
+            fileExists(ctx.projectDir, 'src/providers/ai/openrouter/useChat.ts')),
+          check('OpenRouter env config exists', () =>
+            fileExists(ctx.projectDir, 'src/providers/ai/openrouter/env.ts')),
+          check('OpenRouter barrel export exists', () =>
+            fileExists(ctx.projectDir, 'src/providers/ai/openrouter/index.ts')),
+        )
+      }
+      if (hasMlkit) {
+        providerChecks.push(
+          check('MLKit provider exists', () =>
+            fileExists(ctx.projectDir, 'src/providers/ai/mlkit/MLKitProvider.tsx')),
+          check('MLKit vision hook exists', () =>
+            fileExists(ctx.projectDir, 'src/providers/ai/mlkit/useVision.ts')),
+          check('MLKit barrel export exists', () =>
+            fileExists(ctx.projectDir, 'src/providers/ai/mlkit/index.ts')),
+        )
+      }
+      if (hasExecuTorch) {
+        providerChecks.push(
+          check('ExecuTorch provider exists', () =>
+            fileExists(ctx.projectDir, 'src/providers/ai/executorch/ExecuTorchProvider.tsx')),
+          check('ExecuTorch chat hook exists', () =>
+            fileExists(ctx.projectDir, 'src/providers/ai/executorch/useOnDeviceChat.ts')),
+          check('ExecuTorch barrel export exists', () =>
+            fileExists(ctx.projectDir, 'src/providers/ai/executorch/index.ts')),
+        )
+      }
 
       const checks = await Promise.all([...sharedChecks, ...providerChecks])
 

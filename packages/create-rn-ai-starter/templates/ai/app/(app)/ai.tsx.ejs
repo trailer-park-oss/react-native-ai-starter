@@ -1,0 +1,599 @@
+import { useRef, useState } from 'react'
+import { <%= uiKit.VStack %>, <%= uiKit.HStack %>, Text } from '<%= uiKit.lib %>'
+import {
+  ActivityIndicator,
+  FlatList,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+} from 'react-native'
+<% if (hasMlkit) { -%>
+import * as ImagePicker from 'expo-image-picker'
+<% } -%>
+import { useTokens } from '@/design-system'
+<% if (hasOpenRouter) { -%>
+import { useAiChat as useOpenRouterAiChat, AiChatProvider as OpenRouterProvider } from '@/providers/ai/openrouter'
+<% } -%>
+<% if (hasExecuTorch) { -%>
+import { useAiChat as useExecuTorchAiChat, AiChatProvider as ExecuTorchProvider } from '@/providers/ai/executorch'
+<% } -%>
+<% if (hasMlkit) { -%>
+import { MLKitProvider, useVision } from '@/providers/ai/mlkit'
+<% } -%>
+import type { ChatMessage, UseAiChatReturn } from '@/providers/ai/ai.interface'
+
+type ProviderId = 'openrouter' | 'executorch' | 'mlkit'
+
+type ProviderSpec = {
+  id: ProviderId
+  label: string
+  title: string
+  subtitle: string
+}
+
+const PROVIDERS: ProviderSpec[] = [
+<% if (hasOpenRouter) { -%>
+  {
+    id: 'openrouter',
+    label: 'OpenRouter',
+    title: 'AI Chat',
+    subtitle: 'Cloud AI via OpenRouter for rich conversations.',
+  },
+<% } -%>
+<% if (hasExecuTorch) { -%>
+  {
+    id: 'executorch',
+    label: 'ExecuTorch',
+    title: 'On-Device Chat',
+    subtitle: 'Private, offline chat powered by ExecuTorch.',
+  },
+<% } -%>
+<% if (hasMlkit) { -%>
+  {
+    id: 'mlkit',
+    label: 'ML Kit',
+    title: 'On-Device Vision',
+    subtitle: 'Detect objects in photos using ML Kit.',
+  },
+<% } -%>
+]
+
+function MessageBubble({
+  message,
+  colors,
+  typography,
+  spacing,
+  radius,
+}: {
+  message: ChatMessage
+  colors: ReturnType<typeof useTokens>['colors']
+  typography: ReturnType<typeof useTokens>['typography']
+  spacing: ReturnType<typeof useTokens>['spacing']
+  radius: ReturnType<typeof useTokens>['radius']
+}) {
+  const isUser = message.role === 'user'
+
+  return (
+    <<%= uiKit.VStack %>
+      style={{
+        alignSelf: isUser ? 'flex-end' : 'flex-start',
+        maxWidth: '80%',
+        backgroundColor: isUser ? colors.primary : colors.surfaceRaised,
+        paddingHorizontal: spacing.md,
+        paddingVertical: spacing.sm + 2,
+        borderRadius: radius.xl,
+        ...(isUser
+          ? { borderBottomRightRadius: radius.sm }
+          : { borderBottomLeftRadius: radius.sm }),
+        marginVertical: spacing.xs / 2,
+      }}
+    >
+      {message.imageUri && (
+        <Image
+          source={{ uri: message.imageUri }}
+          style={{
+            width: 200,
+            height: 200,
+            borderRadius: radius.md,
+            marginBottom: spacing.xs,
+          }}
+          resizeMode="cover"
+        />
+      )}
+      <Text
+        style={{
+          color: isUser ? colors.textOnPrimary : colors.text,
+          fontSize: typography.body.fontSize,
+          lineHeight: typography.body.lineHeight,
+        }}
+      >
+        {message.content || '...'}
+      </Text>
+    </<%= uiKit.VStack %>>
+  )
+}
+
+function ChatPanel({
+  title,
+  subtitle,
+  useChatHook,
+}: {
+  title: string
+  subtitle: string
+  useChatHook: () => UseAiChatReturn
+}) {
+  const { colors, typography, spacing, radius } = useTokens()
+  const { messages, isLoading, error, sendMessage } = useChatHook()
+  const [input, setInput] = useState('')
+  const flatListRef = useRef<FlatList<ChatMessage>>(null)
+
+  const handleSend = async () => {
+    if (!input.trim()) return
+    const text = input
+    setInput('')
+    await sendMessage(text)
+  }
+
+  return (
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: colors.background }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={100}
+    >
+      {messages.length === 0 ? (
+        <<%= uiKit.VStack %>
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            paddingHorizontal: spacing.xl,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: typography.headingLarge.fontSize,
+              fontWeight: typography.headingLarge.fontWeight,
+              color: colors.text,
+              marginBottom: spacing.sm,
+            }}
+          >
+            {title}
+          </Text>
+          <Text
+            style={{
+              fontSize: typography.body.fontSize,
+              color: colors.textSubtle,
+              textAlign: 'center',
+              lineHeight: typography.bodyLarge.lineHeight,
+            }}
+          >
+            {subtitle}
+          </Text>
+        </<%= uiKit.VStack %>>
+      ) : (
+        <FlatList
+          ref={flatListRef}
+          data={messages}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <MessageBubble
+              message={item}
+              colors={colors}
+              typography={typography}
+              spacing={spacing}
+              radius={radius}
+            />
+          )}
+          contentContainerStyle={{ padding: spacing.md }}
+          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+          onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
+        />
+      )}
+
+      {error && (
+        <<%= uiKit.VStack %>
+          style={{
+            paddingHorizontal: spacing.md,
+            paddingVertical: spacing.sm,
+            backgroundColor: colors.criticalSubtle,
+          }}
+        >
+          <Text style={{ color: colors.critical, fontSize: typography.caption.fontSize }}>
+            {error}
+          </Text>
+        </<%= uiKit.VStack %>>
+      )}
+
+      <<%= uiKit.HStack %>
+        style={{
+          alignItems: 'flex-end',
+          paddingHorizontal: spacing.sm,
+          paddingVertical: spacing.sm,
+          borderTopWidth: 0.5,
+          borderTopColor: colors.border,
+          backgroundColor: colors.background,
+          gap: spacing.sm,
+        }}
+      >
+        <TextInput
+          style={{
+            flex: 1,
+            backgroundColor: colors.surfaceRaised,
+            color: colors.text,
+            fontSize: typography.body.fontSize,
+            borderRadius: radius.xl,
+            paddingHorizontal: spacing.md,
+            paddingVertical: spacing.sm + 2,
+            maxHeight: 120,
+          }}
+          value={input}
+          onChangeText={setInput}
+          placeholder="Type a message..."
+          placeholderTextColor={colors.textSubtle}
+          multiline
+          maxLength={4000}
+          editable={!isLoading}
+          onSubmitEditing={handleSend}
+          blurOnSubmit={false}
+        />
+        <TouchableOpacity
+          onPress={handleSend}
+          disabled={isLoading || !input.trim()}
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: radius.full,
+            backgroundColor: input.trim() ? colors.primary : colors.surfaceRaised,
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          {isLoading ? (
+            <ActivityIndicator size="small" color={colors.textOnPrimary} />
+          ) : (
+            <Text style={{ color: colors.textOnPrimary, fontSize: 18, fontWeight: '600' }}>
+              ↑
+            </Text>
+          )}
+        </TouchableOpacity>
+      </<%= uiKit.HStack %>>
+    </KeyboardAvoidingView>
+  )
+}
+
+<% if (hasMlkit) { -%>
+function VisionPanel() {
+  const { colors, typography, spacing, radius } = useTokens()
+  const { results, isProcessing, error, isReady, analyzeImage, clearResults } = useVision()
+  const [imageUri, setImageUri] = useState<string | null>(null)
+
+  const pickImage = async (useCamera: boolean) => {
+    const launch = useCamera
+      ? ImagePicker.launchCameraAsync
+      : ImagePicker.launchImageLibraryAsync
+
+    const result = await launch({
+      mediaTypes: ['images'],
+      quality: 0.8,
+    })
+
+    if (!result.canceled && result.assets[0]) {
+      const uri = result.assets[0].uri
+      setImageUri(uri)
+      clearResults()
+      await analyzeImage(uri)
+    }
+  }
+
+  return (
+    <ScrollView
+      style={{ flex: 1, backgroundColor: colors.background }}
+      contentContainerStyle={{ padding: spacing.md }}
+    >
+      {!imageUri ? (
+        <<%= uiKit.VStack %>
+          style={{
+            paddingVertical: spacing['3xl'] + spacing.md,
+            alignItems: 'center',
+          }}
+        >
+          <Text
+            style={{
+              fontSize: typography.headingLarge.fontSize,
+              fontWeight: typography.headingLarge.fontWeight,
+              color: colors.text,
+              marginBottom: spacing.sm,
+            }}
+          >
+            On-Device Vision
+          </Text>
+          <Text
+            style={{
+              fontSize: typography.body.fontSize,
+              color: colors.textSubtle,
+              textAlign: 'center',
+              lineHeight: typography.bodyLarge.lineHeight,
+            }}
+          >
+            Powered by ML Kit. Pick an image to detect objects.
+          </Text>
+          {!isReady && (
+            <<%= uiKit.HStack %>
+              style={{
+                marginTop: spacing.md,
+                alignItems: 'center',
+                gap: spacing.sm,
+              }}
+            >
+              <ActivityIndicator size="small" color={colors.primary} />
+              <Text style={{ color: colors.textSubtle, fontSize: typography.caption.fontSize }}>
+                Loading ML model...
+              </Text>
+            </<%= uiKit.HStack %>>
+          )}
+        </<%= uiKit.VStack %>>
+      ) : (
+        <<%= uiKit.VStack %>
+          style={{
+            borderRadius: radius.lg,
+            overflow: 'hidden',
+            marginBottom: spacing.md,
+          }}
+        >
+          <Image
+            source={{ uri: imageUri }}
+            style={{
+              width: '100%',
+              aspectRatio: 1,
+              backgroundColor: colors.surfaceRaised,
+            }}
+            resizeMode="cover"
+          />
+        </<%= uiKit.VStack %>>
+      )}
+
+      {isProcessing && (
+        <<%= uiKit.HStack %>
+          style={{
+            alignItems: 'center',
+            padding: spacing.sm,
+            borderRadius: radius.md,
+            backgroundColor: colors.infoSubtle,
+            marginBottom: spacing.md,
+          }}
+        >
+          <ActivityIndicator size="small" color={colors.info} />
+          <Text
+            style={{
+              color: colors.info,
+              marginLeft: spacing.sm,
+              fontSize: typography.body.fontSize,
+            }}
+          >
+            Analyzing image...
+          </Text>
+        </<%= uiKit.HStack %>>
+      )}
+
+      {error && (
+        <<%= uiKit.VStack %>
+          style={{
+            padding: spacing.sm,
+            borderRadius: radius.md,
+            backgroundColor: colors.criticalSubtle,
+            marginBottom: spacing.md,
+          }}
+        >
+          <Text style={{ color: colors.critical, fontSize: typography.body.fontSize }}>
+            {error}
+          </Text>
+        </<%= uiKit.VStack %>>
+      )}
+
+      {results.length > 0 && (
+        <<%= uiKit.VStack %> style={{ marginBottom: spacing.md }}>
+          <Text
+            style={{
+              fontSize: typography.bodyLarge.fontSize,
+              fontWeight: '600',
+              color: colors.text,
+              marginBottom: spacing.sm,
+            }}
+          >
+            Detected Objects ({results.length})
+          </Text>
+          {results.map((item, i) => (
+            <<%= uiKit.VStack %>
+              key={i}
+              style={{
+                backgroundColor: colors.surfaceRaised,
+                borderRadius: radius.md,
+                padding: spacing.sm,
+                marginBottom: spacing.sm,
+              }}
+            >
+              <Text
+                style={{
+                  color: colors.text,
+                  fontWeight: '600',
+                  fontSize: typography.body.fontSize,
+                }}
+              >
+                {item.label}
+              </Text>
+              <<%= uiKit.HStack %>
+                style={{
+                  alignItems: 'center',
+                  marginTop: spacing.xs + 2,
+                  gap: spacing.sm,
+                }}
+              >
+                <<%= uiKit.VStack %>
+                  style={{
+                    flex: 1,
+                    height: 6,
+                    borderRadius: radius.sm,
+                    backgroundColor: colors.borderSubtle,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <<%= uiKit.VStack %>
+                    style={{
+                      width: `${Math.round(item.confidence * 100)}%`,
+                      height: '100%',
+                      backgroundColor: colors.primary,
+                      borderRadius: radius.sm,
+                    }}
+                  />
+                </<%= uiKit.VStack %>>
+                <Text style={{ color: colors.textSubtle, fontSize: typography.caption.fontSize }}>
+                  {Math.round(item.confidence * 100)}%
+                </Text>
+              </<%= uiKit.HStack %>>
+            </<%= uiKit.VStack %>>
+          ))}
+        </<%= uiKit.VStack %>>
+      )}
+
+      <<%= uiKit.HStack %> style={{ gap: spacing.sm }}>
+        <TouchableOpacity
+          onPress={() => pickImage(false)}
+          disabled={isProcessing}
+          style={{
+            flex: 1,
+            paddingVertical: spacing.sm + 6,
+            alignItems: 'center',
+            backgroundColor: colors.primary,
+            borderRadius: radius.md,
+          }}
+        >
+          <Text
+            style={{
+              color: colors.textOnPrimary,
+              fontWeight: '600',
+              fontSize: typography.body.fontSize,
+            }}
+          >
+            Gallery
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => pickImage(true)}
+          disabled={isProcessing}
+          style={{
+            flex: 1,
+            paddingVertical: spacing.sm + 6,
+            alignItems: 'center',
+            backgroundColor: colors.primary,
+            borderRadius: radius.md,
+          }}
+        >
+          <Text
+            style={{
+              color: colors.textOnPrimary,
+              fontWeight: '600',
+              fontSize: typography.body.fontSize,
+            }}
+          >
+            Camera
+          </Text>
+        </TouchableOpacity>
+      </<%= uiKit.HStack %>>
+    </ScrollView>
+  )
+}
+<% } -%>
+
+export default function AiScreen() {
+  const { colors, spacing, radius, typography } = useTokens()
+  const [activeProvider, setActiveProvider] = useState<ProviderId>(PROVIDERS[0].id)
+
+  const hasMultiple = PROVIDERS.length > 1
+
+  const renderProvider = () => {
+    switch (activeProvider) {
+<% if (hasOpenRouter) { -%>
+      case 'openrouter':
+        return (
+          <OpenRouterProvider>
+            <ChatPanel
+              title={PROVIDERS.find((p) => p.id === 'openrouter')?.title ?? 'AI Chat'}
+              subtitle={PROVIDERS.find((p) => p.id === 'openrouter')?.subtitle ?? ''}
+              useChatHook={useOpenRouterAiChat}
+            />
+          </OpenRouterProvider>
+        )
+<% } -%>
+<% if (hasExecuTorch) { -%>
+      case 'executorch':
+        return (
+          <ExecuTorchProvider>
+            <ChatPanel
+              title={PROVIDERS.find((p) => p.id === 'executorch')?.title ?? 'On-Device Chat'}
+              subtitle={PROVIDERS.find((p) => p.id === 'executorch')?.subtitle ?? ''}
+              useChatHook={useExecuTorchAiChat}
+            />
+          </ExecuTorchProvider>
+        )
+<% } -%>
+<% if (hasMlkit) { -%>
+      case 'mlkit':
+        return (
+          <MLKitProvider>
+            <VisionPanel />
+          </MLKitProvider>
+        )
+<% } -%>
+      default:
+        return null
+    }
+  }
+
+  return (
+    <<%= uiKit.VStack %> style={{ flex: 1, backgroundColor: colors.background }}>
+      {hasMultiple && (
+        <<%= uiKit.HStack %>
+          style={{
+            paddingHorizontal: spacing.md,
+            paddingTop: spacing.md,
+            paddingBottom: spacing.sm,
+            gap: spacing.sm,
+            flexWrap: 'wrap',
+          }}
+        >
+          {PROVIDERS.map((provider) => {
+            const isActive = provider.id === activeProvider
+            return (
+              <TouchableOpacity
+                key={provider.id}
+                onPress={() => setActiveProvider(provider.id)}
+                style={{
+                  paddingHorizontal: spacing.md,
+                  paddingVertical: spacing.xs + 2,
+                  borderRadius: radius.full,
+                  backgroundColor: isActive ? colors.primary : colors.surfaceRaised,
+                  borderWidth: 1,
+                  borderColor: isActive ? colors.primary : colors.border,
+                }}
+              >
+                <Text
+                  style={{
+                    color: isActive ? colors.textOnPrimary : colors.text,
+                    fontSize: typography.caption.fontSize,
+                    fontWeight: '600',
+                  }}
+                >
+                  {provider.label}
+                </Text>
+              </TouchableOpacity>
+            )
+          })}
+        </<%= uiKit.HStack %>>
+      )}
+      {renderProvider()}
+    </<%= uiKit.VStack %>>
+  )
+}

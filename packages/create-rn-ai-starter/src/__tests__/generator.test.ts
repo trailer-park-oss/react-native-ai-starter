@@ -19,6 +19,10 @@ async function exists(p: string): Promise<boolean> {
 }
 
 function toTemplateData(projectName: string, config: StarterConfig): TemplateData {
+  const hasMlkit = config.ai.includes('on-device-mlkit')
+  const hasExecuTorch = config.ai.includes('on-device-executorch')
+  const hasOpenRouter = config.ai.includes('online-openrouter')
+
   return {
     projectName,
     ui: config.ui,
@@ -31,13 +35,17 @@ function toTemplateData(projectName: string, config: StarterConfig): TemplateDat
     hasPayments: config.payments !== 'none',
     isFullDx: config.dx === 'full',
     uiKit: getUIKit(config.ui),
+    hasAi: config.ai.length > 0,
+    hasMlkit,
+    hasExecuTorch,
+    hasOpenRouter,
   }
 }
 
 const ALL_CONFIG: StarterConfig = {
   ui: 'gluestack',
   auth: 'clerk',
-  ai: 'online-openrouter',
+  ai: ['online-openrouter'],
   payments: 'stripe',
   dx: 'full',
   preset: 'radix-blue',
@@ -88,7 +96,7 @@ describe('generator — template rendering', () => {
     const content = await readFile(path.join(tmpDir, 'src/starter.config.ts'), 'utf-8')
     expect(content).toContain("ui: 'gluestack'")
     expect(content).toContain("auth: 'clerk'")
-    expect(content).toContain("ai: 'online-openrouter'")
+    expect(content).toContain('ai: [\"online-openrouter\"]')
     expect(content).toContain("payments: 'stripe'")
     expect(content).toContain("dx: 'full'")
     expect(content).toContain("preset: 'radix-blue'")
@@ -111,6 +119,48 @@ describe('generator — template rendering', () => {
     }
     expect(content).toContain('export interface StarterConfig')
     expect(content).toContain('export const starterConfig: StarterConfig')
+  })
+
+  it('renders AI screen for OpenRouter provider', async () => {
+    tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-ai-openrouter-'))
+    const data = toTemplateData('ai-openrouter', {
+      ...DEFAULT_CONFIG,
+      ai: ['online-openrouter'],
+    })
+
+    await renderTemplates('ai', tmpDir, data)
+
+    const content = await readFile(path.join(tmpDir, 'app/(app)/ai.tsx'), 'utf-8')
+    expect(content).toContain('OpenRouter')
+    expect(content).toContain('AI Chat')
+  })
+
+  it('renders AI screen for ML Kit provider', async () => {
+    tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-ai-mlkit-'))
+    const data = toTemplateData('ai-mlkit', {
+      ...DEFAULT_CONFIG,
+      ai: ['on-device-mlkit'],
+    })
+
+    await renderTemplates('ai', tmpDir, data)
+
+    const content = await readFile(path.join(tmpDir, 'app/(app)/ai.tsx'), 'utf-8')
+    expect(content).toContain('ML Kit')
+    expect(content).toContain('On-Device Vision')
+  })
+
+  it('renders provider switcher when multiple AI providers are selected', async () => {
+    tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-ai-multi-'))
+    const data = toTemplateData('ai-multi', {
+      ...DEFAULT_CONFIG,
+      ai: ['on-device-mlkit', 'online-openrouter'],
+    })
+
+    await renderTemplates('ai', tmpDir, data)
+
+    const content = await readFile(path.join(tmpDir, 'app/(app)/ai.tsx'), 'utf-8')
+    expect(content).toContain('OpenRouter')
+    expect(content).toContain('ML Kit')
   })
 
   it('includes auth screen in root layout Stack when auth is enabled', async () => {

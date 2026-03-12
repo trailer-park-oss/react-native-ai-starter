@@ -7,13 +7,17 @@ export interface TemplateData {
   projectName: string
   ui: string
   auth: string
-  ai: string
+  ai: string[]
   payments: string
   dx: string
   preset: string
   hasAuth: boolean
   hasPayments: boolean
   isFullDx: boolean
+  hasAi: boolean
+  hasMlkit: boolean
+  hasExecuTorch: boolean
+  hasOpenRouter: boolean
   uiKit: {
     lib: string
     VStack: string

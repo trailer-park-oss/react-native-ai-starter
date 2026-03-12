@@ -9,11 +9,14 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native'
-import * as ImagePicker from 'expo-image-picker'
 import { useTokens } from '@/design-system'
+<% if (hasAi) { -%>
+import * as ImagePicker from 'expo-image-picker'
 import { useAiChat, AiChatProvider } from '@/providers/ai'
 import type { ChatMessage } from '@/providers/ai/ai.interface'
+<% } -%>
 
+<% if (hasAi) { -%>
 function MessageBubble({
   message,
   colors,
@@ -125,8 +128,10 @@ function ChatContent() {
               marginBottom: spacing.sm,
             }}
           >
-<% if (ai === 'online-openrouter') { -%>
+<% if (hasOpenRouter) { -%>
             AI Chat
+<% } else if (hasExecuTorch) { -%>
+            On-Device Chat
 <% } else { -%>
             Vision AI
 <% } -%>
@@ -139,8 +144,10 @@ function ChatContent() {
               lineHeight: typography.bodyLarge.lineHeight,
             }}
           >
-<% if (ai === 'online-openrouter') { -%>
+<% if (hasOpenRouter) { -%>
             Powered by OpenRouter. Send a message to start chatting.
+<% } else if (hasExecuTorch) { -%>
+            Powered by ExecuTorch. Send a message to chat on-device.
 <% } else { -%>
             Powered by ML Kit. Send a photo and I'll tell you what I see.
 <% } -%>
@@ -268,11 +275,49 @@ function ChatContent() {
     </KeyboardAvoidingView>
   )
 }
+<% } -%>
 
 export default function HomeScreen() {
+<% if (hasAi) { -%>
   return (
     <AiChatProvider>
       <ChatContent />
     </AiChatProvider>
   )
+<% } else { -%>
+  const { colors, typography, spacing } = useTokens()
+
+  return (
+    <<%= uiKit.VStack %>
+      style={{
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: colors.background,
+        paddingHorizontal: spacing.xl,
+      }}
+    >
+      <Text
+        style={{
+          fontSize: typography.headingLarge.fontSize,
+          fontWeight: typography.headingLarge.fontWeight,
+          color: colors.text,
+          marginBottom: spacing.sm,
+        }}
+      >
+        AI Disabled
+      </Text>
+      <Text
+        style={{
+          fontSize: typography.body.fontSize,
+          color: colors.textSubtle,
+          textAlign: 'center',
+          lineHeight: typography.bodyLarge.lineHeight,
+        }}
+      >
+        This project was scaffolded without AI providers. Re-run the generator to enable AI.
+      </Text>
+    </<%= uiKit.VStack %>>
+  )
+<% } -%>
 }

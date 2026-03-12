@@ -1,8 +1,18 @@
-<% if (ai === 'online-openrouter') { -%>
+<% if (hasOpenRouter) { -%>
 export { useChat, type UseChatReturn } from './openrouter'
 export { openRouterClient } from './openrouter'
-<% } else { -%>
+<% } -%>
+<% if (hasMlkit) { -%>
 export { useVision, MLKitProvider } from './mlkit'
 <% } -%>
-export { useAiChat, AiChatProvider } from './<%= ai === 'online-openrouter' ? 'openrouter' : 'mlkit' %>'
+<% if (hasExecuTorch) { -%>
+export { ExecuTorchProvider } from './executorch'
+<% } -%>
+<% if (hasOpenRouter) { -%>
+export { useAiChat, AiChatProvider } from './openrouter'
+<% } else if (hasExecuTorch) { -%>
+export { useAiChat, AiChatProvider } from './executorch'
+<% } else if (hasMlkit) { -%>
+export { useAiChat, AiChatProvider } from './mlkit'
+<% } -%>
 export type { ChatMessage, ChatOptions, VisionResult, UseAiChatReturn } from './ai.interface'
