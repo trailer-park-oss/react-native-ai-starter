@@ -27,9 +27,12 @@ const MODEL_MAP = {
 
 type ModelId = keyof typeof MODEL_MAP
 
-export function useOnDeviceChat(options?: { modelId?: ModelId }): UseAiChatReturn {
+export function useOnDeviceChat(options?: { modelId?: ModelId; modelPath?: string }): UseAiChatReturn {
   const modelId = options?.modelId ?? 'LLAMA3_2_1B'
-  const llm = useLLM({ model: MODEL_MAP[modelId] })
+  const llm = useLLM({
+    model: MODEL_MAP[modelId],
+    modelPath: options?.modelPath,
+  })
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)

@@ -9,6 +9,9 @@ type ModelId =
   | 'PHI_4_MINI'
   | 'SMOLLM_2_360M'
 
-export function useAiChat(options?: { modelId?: ModelId }): UseAiChatReturn {
-  return useOnDeviceChat(options)
+export function useAiChat(options?: { modelId?: ModelId; modelPath?: string }): UseAiChatReturn {
+  return useOnDeviceChat({
+    modelId: options?.modelId,
+    modelPath: options?.modelPath,
+  })
 }

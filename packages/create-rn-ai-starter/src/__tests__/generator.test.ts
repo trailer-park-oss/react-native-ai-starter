@@ -240,6 +240,23 @@ describe('generator — template rendering', () => {
     expect(content).toContain('LLAMA3_2_3B')
   })
 
+  it('ai screen renders executorch download status UI', async () => {
+    tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-ai-exec-ui-'))
+    const data = toTemplateData('ai-exec-ui', {
+      ...DEFAULT_CONFIG,
+      ai: {
+        providers: ['on-device-executorch'],
+        executorch: { model: 'LLAMA3_2_1B' },
+      },
+    })
+
+    await renderTemplates('ai', tmpDir, data)
+
+    const content = await readFile(path.join(tmpDir, 'app/(app)/ai.tsx'), 'utf-8')
+    expect(content).toContain('ExecuTorch model')
+    expect(content).toContain('Download model')
+  })
+
   it('includes auth screen in root layout Stack when auth is enabled', async () => {
     tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-starter-'))
     const data = toTemplateData('auth-app', { ...DEFAULT_CONFIG, auth: 'clerk' })
