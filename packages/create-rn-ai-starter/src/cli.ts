@@ -1,9 +1,11 @@
 import { Command } from 'commander'
-import { checkbox, select } from '@inquirer/prompts'
+import { checkbox, confirm, select } from '@inquirer/prompts'
 import { DEFAULT_CONFIG, ALLOWED_AI_PROVIDERS, ALLOWED_VALUES } from '@/config.js'
 import { runGenerator } from '@/generator.js'
 import { resolveProjectPath, validateConfig } from '@/utils/validation.js'
 import { createLogger } from '@/utils/logger.js'
+import { downloadExecuTorchModel } from '@/utils/executorch-download.js'
+import path from 'node:path'
 import type { StarterConfig } from '@/types.js'
 
 export async function run(): Promise<void> {
@@ -47,6 +49,8 @@ export async function run(): Promise<void> {
       const config = opts['yes']
         ? { ...DEFAULT_CONFIG, ...partial }
         : await promptForMissing(partial)
+
+      await handleExecuTorchDownload(config, projectDir, logger, !opts['yes'])
 
       validateConfig(config)
 
@@ -212,4 +216,41 @@ async function ensureAiModels(ai: StarterConfig['ai']): Promise<StarterConfig['a
   }
 
   return next
+}
+
+async function handleExecuTorchDownload(
+  config: StarterConfig,
+  projectDir: string,
+  logger: ReturnType<typeof createLogger>,
+  interactive: boolean,
+): Promise<void> {
+  if (!config.ai.providers.includes('on-device-executorch')) {
+    return
+  }
+
+  const execConfig = config.ai.executorch ?? { model: DEFAULT_EXECUTORCH_MODEL }
+  execConfig.model ||= DEFAULT_EXECUTORCH_MODEL
+  config.ai.executorch = execConfig
+
+  if (execConfig.modelPath) {
+    return
+  }
+
+  const shouldDownload = interactive
+    ? await confirm({
+        message: 'Download ExecuTorch model now?',
+        initial: true,
+      })
+    : true
+
+  if (!shouldDownload) {
+    return
+  }
+
+  logger.info(`Downloading ExecuTorch model "${execConfig.model}"…`)
+  const targetPath = await downloadExecuTorchModel(projectDir, execConfig.model, (progress) => {
+    logger.info(`ExecuTorch download ${Math.round(progress * 100)}%`)
+  })
+  execConfig.modelPath = path.relative(projectDir, targetPath)
+  logger.info(`ExecuTorch model saved to ${execConfig.modelPath}`)
 }
