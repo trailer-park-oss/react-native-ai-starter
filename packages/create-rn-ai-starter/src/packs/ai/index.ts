@@ -5,15 +5,18 @@ import { fileExists } from '@/utils/fs.js'
 import { getUIKit } from '@/packs/ui/kits.js'
 
 function buildTemplateData(ctx: PackContext): TemplateData {
-  const hasMlkit = ctx.config.ai.includes('on-device-mlkit')
-  const hasExecuTorch = ctx.config.ai.includes('on-device-executorch')
-  const hasOpenRouter = ctx.config.ai.includes('online-openrouter')
+  const providers = ctx.config.ai.providers
+  const hasMlkit = providers.includes('on-device-mlkit')
+  const hasExecuTorch = providers.includes('on-device-executorch')
+  const hasOpenRouter = providers.includes('online-openrouter')
 
   return {
     projectName: ctx.projectName,
     ui: ctx.config.ui,
     auth: ctx.config.auth,
-    ai: ctx.config.ai,
+    aiProviders: providers,
+    openrouterModel: ctx.config.ai.openrouter?.model,
+    executorchModel: ctx.config.ai.executorch?.model,
     payments: ctx.config.payments,
     dx: ctx.config.dx,
     preset: ctx.config.preset,
@@ -21,7 +24,7 @@ function buildTemplateData(ctx: PackContext): TemplateData {
     hasPayments: ctx.config.payments !== 'none',
     isFullDx: ctx.config.dx === 'full',
     uiKit: getUIKit(ctx.config.ui),
-    hasAi: ctx.config.ai.length > 0,
+    hasAi: providers.length > 0,
     hasMlkit,
     hasExecuTorch,
     hasOpenRouter,
@@ -34,9 +37,10 @@ async function check(name: string, fn: () => Promise<boolean>): Promise<Validati
 }
 
 export function createAiPack(config: StarterConfig): FeaturePack {
-  const hasMlkit = config.ai.includes('on-device-mlkit')
-  const hasExecuTorch = config.ai.includes('on-device-executorch')
-  const hasOpenRouter = config.ai.includes('online-openrouter')
+  const providers = config.ai.providers
+  const hasMlkit = providers.includes('on-device-mlkit')
+  const hasExecuTorch = providers.includes('on-device-executorch')
+  const hasOpenRouter = providers.includes('online-openrouter')
 
   const expoInstallPackages = new Set<string>()
   if (hasOpenRouter) expoInstallPackages.add('expo-image-picker')

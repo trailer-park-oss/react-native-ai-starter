@@ -19,15 +19,18 @@ async function exists(p: string): Promise<boolean> {
 }
 
 function toTemplateData(projectName: string, config: StarterConfig): TemplateData {
-  const hasMlkit = config.ai.includes('on-device-mlkit')
-  const hasExecuTorch = config.ai.includes('on-device-executorch')
-  const hasOpenRouter = config.ai.includes('online-openrouter')
+  const providers = config.ai.providers
+  const hasMlkit = providers.includes('on-device-mlkit')
+  const hasExecuTorch = providers.includes('on-device-executorch')
+  const hasOpenRouter = providers.includes('online-openrouter')
 
   return {
     projectName,
     ui: config.ui,
     auth: config.auth,
-    ai: config.ai,
+    aiProviders: providers,
+    openrouterModel: config.ai.openrouter?.model,
+    executorchModel: config.ai.executorch?.model,
     payments: config.payments,
     dx: config.dx,
     preset: config.preset,
@@ -35,7 +38,7 @@ function toTemplateData(projectName: string, config: StarterConfig): TemplateDat
     hasPayments: config.payments !== 'none',
     isFullDx: config.dx === 'full',
     uiKit: getUIKit(config.ui),
-    hasAi: config.ai.length > 0,
+    hasAi: providers.length > 0,
     hasMlkit,
     hasExecuTorch,
     hasOpenRouter,
@@ -45,7 +48,7 @@ function toTemplateData(projectName: string, config: StarterConfig): TemplateDat
 const ALL_CONFIG: StarterConfig = {
   ui: 'gluestack',
   auth: 'clerk',
-  ai: ['online-openrouter'],
+  ai: { providers: ['online-openrouter'], openrouter: { model: 'openai/gpt-4o-mini' } },
   payments: 'stripe',
   dx: 'full',
   preset: 'radix-blue',
@@ -96,10 +99,29 @@ describe('generator — template rendering', () => {
     const content = await readFile(path.join(tmpDir, 'src/starter.config.ts'), 'utf-8')
     expect(content).toContain("ui: 'gluestack'")
     expect(content).toContain("auth: 'clerk'")
-    expect(content).toContain('ai: [\"online-openrouter\"]')
+    expect(content).toContain('providers: [\"online-openrouter\"]')
+    expect(content).toContain('openrouter: { model:')
     expect(content).toContain("payments: 'stripe'")
     expect(content).toContain("dx: 'full'")
     expect(content).toContain("preset: 'radix-blue'")
+  })
+
+  it('starter.config.ts includes ai model config', async () => {
+    tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-starter-ai-models-'))
+    const data = toTemplateData('ai-models', {
+      ...DEFAULT_CONFIG,
+      ai: {
+        providers: ['online-openrouter', 'on-device-executorch'],
+        openrouter: { model: 'openai/gpt-4o-mini' },
+        executorch: { model: 'LLAMA3_2_1B' },
+      },
+    })
+
+    await renderTemplates('core', tmpDir, data)
+
+    const content = await readFile(path.join(tmpDir, 'src/starter.config.ts'), 'utf-8')
+    expect(content).toContain('openrouter: { model:')
+    expect(content).toContain('executorch: { model:')
   })
 
   it('starter.config.ts includes all required type definitions', async () => {
@@ -125,7 +147,7 @@ describe('generator — template rendering', () => {
     tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-ai-openrouter-'))
     const data = toTemplateData('ai-openrouter', {
       ...DEFAULT_CONFIG,
-      ai: ['online-openrouter'],
+      ai: { providers: ['online-openrouter'], openrouter: { model: 'openai/gpt-4o-mini' } },
     })
 
     await renderTemplates('ai', tmpDir, data)
@@ -139,7 +161,7 @@ describe('generator — template rendering', () => {
     tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-ai-mlkit-'))
     const data = toTemplateData('ai-mlkit', {
       ...DEFAULT_CONFIG,
-      ai: ['on-device-mlkit'],
+      ai: { providers: ['on-device-mlkit'] },
     })
 
     await renderTemplates('ai', tmpDir, data)
@@ -153,7 +175,10 @@ describe('generator — template rendering', () => {
     tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-ai-multi-'))
     const data = toTemplateData('ai-multi', {
       ...DEFAULT_CONFIG,
-      ai: ['on-device-mlkit', 'online-openrouter'],
+      ai: {
+        providers: ['on-device-mlkit', 'online-openrouter'],
+        openrouter: { model: 'openai/gpt-4o-mini' },
+      },
     })
 
     await renderTemplates('ai', tmpDir, data)
@@ -161,6 +186,41 @@ describe('generator — template rendering', () => {
     const content = await readFile(path.join(tmpDir, 'app/(app)/ai.tsx'), 'utf-8')
     expect(content).toContain('OpenRouter')
     expect(content).toContain('ML Kit')
+  })
+
+  it('uses selected OpenRouter model in ai screen', async () => {
+    tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-ai-openrouter-model-'))
+    const data = toTemplateData('ai-openrouter', {
+      ...DEFAULT_CONFIG,
+      ai: {
+        providers: ['online-openrouter'],
+        openrouter: { model: 'openai/gpt-4o-mini' },
+      },
+    })
+
+    await renderTemplates('ai', tmpDir, data)
+
+    const content = await readFile(path.join(tmpDir, 'app/(app)/ai.tsx'), 'utf-8')
+    expect(content).toContain('openai/gpt-4o-mini')
+  })
+
+  it('uses selected ExecuTorch model in hook', async () => {
+    tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-ai-executorch-model-'))
+    const data = toTemplateData('ai-executorch', {
+      ...DEFAULT_CONFIG,
+      ai: {
+        providers: ['on-device-executorch'],
+        executorch: { model: 'LLAMA3_2_3B' },
+      },
+    })
+
+    await renderTemplates('ai-executorch', tmpDir, data)
+
+    const content = await readFile(
+      path.join(tmpDir, 'src/providers/ai/executorch/useOnDeviceChat.ts'),
+      'utf-8',
+    )
+    expect(content).toContain('LLAMA3_2_3B')
   })
 
   it('includes auth screen in root layout Stack when auth is enabled', async () => {

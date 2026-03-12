@@ -1,5 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useLLM, LLAMA3_2_1B, type Message } from 'react-native-executorch'
+import {
+  useLLM,
+  LLAMA3_2_1B,
+  LLAMA3_2_3B,
+  QWEN2_5_0_5B,
+  QWEN2_5_1_5B,
+  PHI_4_MINI,
+  SMOLLM_2_360M,
+  type Message,
+} from 'react-native-executorch'
 import type { ChatMessage, UseAiChatReturn } from '../ai.interface'
 
 let idCounter = 0
@@ -7,8 +16,20 @@ function createId(): string {
   return `msg_${Date.now()}_${++idCounter}`
 }
 
-export function useOnDeviceChat(): UseAiChatReturn {
-  const llm = useLLM({ model: LLAMA3_2_1B })
+const MODEL_MAP = {
+  LLAMA3_2_1B,
+  LLAMA3_2_3B,
+  QWEN2_5_0_5B,
+  QWEN2_5_1_5B,
+  PHI_4_MINI,
+  SMOLLM_2_360M,
+} as const
+
+type ModelId = keyof typeof MODEL_MAP
+
+export function useOnDeviceChat(options?: { modelId?: ModelId }): UseAiChatReturn {
+  const modelId = options?.modelId ?? 'LLAMA3_2_1B'
+  const llm = useLLM({ model: MODEL_MAP[modelId] })
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)

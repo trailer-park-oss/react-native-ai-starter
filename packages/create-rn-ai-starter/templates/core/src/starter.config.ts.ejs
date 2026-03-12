@@ -14,16 +14,30 @@ export type ThemePreset =
 export interface StarterConfig {
   ui: UiProvider
   auth: AuthProvider
-  ai: AiProvider[]
+  ai: AiConfig
   payments: PaymentsProvider
   dx: DxProfile
   preset: ThemePreset
 }
 
+export interface AiConfig {
+  providers: AiProvider[]
+  openrouter?: { model: string }
+  executorch?: { model: string }
+}
+
 export const starterConfig: StarterConfig = {
   ui: '<%= ui %>',
   auth: '<%= auth %>',
-  ai: <%- JSON.stringify(ai) %>,
+  ai: {
+    providers: <%- JSON.stringify(aiProviders) %>,
+<% if (openrouterModel) { -%>
+    openrouter: { model: '<%= openrouterModel %>' },
+<% } -%>
+<% if (executorchModel) { -%>
+    executorch: { model: '<%= executorchModel %>' },
+<% } -%>
+  },
   payments: '<%= payments %>',
   dx: '<%= dx %>',
   preset: '<%= preset %>',

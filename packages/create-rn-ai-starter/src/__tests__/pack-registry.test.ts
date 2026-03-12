@@ -49,7 +49,7 @@ describe('getActivePacks', () => {
   })
 
   it('excludes ai pack when no providers are selected', () => {
-    const packs = getActivePacks({ ...DEFAULT_CONFIG, ai: [] })
+    const packs = getActivePacks({ ...DEFAULT_CONFIG, ai: { providers: [] } })
     const ids = packs.map((p) => p.id)
 
     expect(ids).not.toContain('ai')
@@ -59,7 +59,7 @@ describe('getActivePacks', () => {
     const config: StarterConfig = {
       ui: 'tamagui',
       auth: 'clerk',
-      ai: ['on-device-mlkit'],
+      ai: { providers: ['on-device-mlkit'] },
       payments: 'stripe',
       dx: 'full',
       preset: 'radix-green',
@@ -83,7 +83,7 @@ describe('pack ownership boundaries', () => {
     const allConfig: StarterConfig = {
       ui: 'tamagui',
       auth: 'clerk',
-      ai: ['on-device-mlkit'],
+      ai: { providers: ['on-device-mlkit'] },
       payments: 'stripe',
       dx: 'full',
       preset: 'radix-green',
@@ -110,7 +110,7 @@ describe('pack ownership boundaries', () => {
     const allConfig: StarterConfig = {
       ui: 'tamagui',
       auth: 'clerk',
-      ai: ['on-device-mlkit'],
+      ai: { providers: ['on-device-mlkit'] },
       payments: 'stripe',
       dx: 'full',
       preset: 'radix-green',
@@ -126,7 +126,7 @@ describe('pack ownership boundaries', () => {
     const allConfig: StarterConfig = {
       ui: 'tamagui',
       auth: 'clerk',
-      ai: ['on-device-mlkit'],
+      ai: { providers: ['on-device-mlkit'] },
       payments: 'stripe',
       dx: 'full',
       preset: 'radix-green',

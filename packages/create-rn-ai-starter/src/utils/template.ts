@@ -7,7 +7,9 @@ export interface TemplateData {
   projectName: string
   ui: string
   auth: string
-  ai: string[]
+  aiProviders: string[]
+  openrouterModel?: string
+  executorchModel?: string
   payments: string
   dx: string
   preset: string

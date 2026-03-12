@@ -28,7 +28,7 @@ function isPackEnabled(id: string, config: StarterConfig): boolean {
     case 'auth':
       return config.auth !== 'none'
     case 'ai':
-      return config.ai.length > 0
+      return config.ai.providers.length > 0
     case 'payments':
       return config.payments !== 'none'
     case 'dx':

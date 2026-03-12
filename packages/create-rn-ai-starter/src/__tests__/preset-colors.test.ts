@@ -18,15 +18,18 @@ async function exists(p: string): Promise<boolean> {
 }
 
 function toTemplateData(projectName: string, config: StarterConfig): TemplateData {
-  const hasMlkit = config.ai.includes('on-device-mlkit')
-  const hasExecuTorch = config.ai.includes('on-device-executorch')
-  const hasOpenRouter = config.ai.includes('online-openrouter')
+  const providers = config.ai.providers
+  const hasMlkit = providers.includes('on-device-mlkit')
+  const hasExecuTorch = providers.includes('on-device-executorch')
+  const hasOpenRouter = providers.includes('online-openrouter')
 
   return {
     projectName,
     ui: config.ui,
     auth: config.auth,
-    ai: config.ai,
+    aiProviders: providers,
+    openrouterModel: config.ai.openrouter?.model,
+    executorchModel: config.ai.executorch?.model,
     payments: config.payments,
     dx: config.dx,
     preset: config.preset,
@@ -34,7 +37,7 @@ function toTemplateData(projectName: string, config: StarterConfig): TemplateDat
     hasPayments: config.payments !== 'none',
     isFullDx: config.dx === 'full',
     uiKit: getUIKit(config.ui),
-    hasAi: config.ai.length > 0,
+    hasAi: providers.length > 0,
     hasMlkit,
     hasExecuTorch,
     hasOpenRouter,

@@ -61,6 +61,13 @@ const PROVIDERS: ProviderSpec[] = [
 <% } -%>
 ]
 
+<% if (hasOpenRouter) { -%>
+const OPENROUTER_MODEL = '<%= openrouterModel %>'
+<% } -%>
+<% if (hasExecuTorch) { -%>
+const EXECUTORCH_MODEL = '<%= executorchModel %>'
+<% } -%>
+
 function MessageBubble({
   message,
   colors,
@@ -522,7 +529,7 @@ export default function AiScreen() {
             <ChatPanel
               title={PROVIDERS.find((p) => p.id === 'openrouter')?.title ?? 'AI Chat'}
               subtitle={PROVIDERS.find((p) => p.id === 'openrouter')?.subtitle ?? ''}
-              useChatHook={useOpenRouterAiChat}
+              useChatHook={() => useOpenRouterAiChat({ model: OPENROUTER_MODEL })}
             />
           </OpenRouterProvider>
         )
@@ -534,7 +541,7 @@ export default function AiScreen() {
             <ChatPanel
               title={PROVIDERS.find((p) => p.id === 'executorch')?.title ?? 'On-Device Chat'}
               subtitle={PROVIDERS.find((p) => p.id === 'executorch')?.subtitle ?? ''}
-              useChatHook={useExecuTorchAiChat}
+              useChatHook={() => useExecuTorchAiChat({ modelId: EXECUTORCH_MODEL })}
             />
           </ExecuTorchProvider>
         )

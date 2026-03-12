@@ -19,15 +19,18 @@ async function exists(p: string): Promise<boolean> {
 }
 
 function toTemplateData(projectName: string, config: StarterConfig): TemplateData {
-  const hasMlkit = config.ai.includes('on-device-mlkit')
-  const hasExecuTorch = config.ai.includes('on-device-executorch')
-  const hasOpenRouter = config.ai.includes('online-openrouter')
+  const providers = config.ai.providers
+  const hasMlkit = providers.includes('on-device-mlkit')
+  const hasExecuTorch = providers.includes('on-device-executorch')
+  const hasOpenRouter = providers.includes('online-openrouter')
 
   return {
     projectName,
     ui: config.ui,
     auth: config.auth,
-    ai: config.ai,
+    aiProviders: providers,
+    openrouterModel: config.ai.openrouter?.model,
+    executorchModel: config.ai.executorch?.model,
     payments: config.payments,
     dx: config.dx,
     preset: config.preset,
@@ -35,7 +38,7 @@ function toTemplateData(projectName: string, config: StarterConfig): TemplateDat
     hasPayments: config.payments !== 'none',
     isFullDx: config.dx === 'full',
     uiKit: getUIKit(config.ui),
-    hasAi: config.ai.length > 0,
+    hasAi: providers.length > 0,
     hasMlkit,
     hasExecuTorch,
     hasOpenRouter,
@@ -528,7 +531,7 @@ describe('cross-cutting — maximal config (all features enabled)', () => {
   const maxConfig: StarterConfig = {
     ui: 'tamagui',
     auth: 'clerk',
-    ai: ['online-openrouter'],
+    ai: { providers: ['online-openrouter'], openrouter: { model: 'openai/gpt-4o-mini' } },
     payments: 'stripe',
     dx: 'full',
     preset: 'radix-blue',
@@ -550,7 +553,8 @@ describe('cross-cutting — maximal config (all features enabled)', () => {
     const starterConfig = await readFile(path.join(tmpDir, 'src/starter.config.ts'), 'utf-8')
     expect(starterConfig).toContain("ui: 'tamagui'")
     expect(starterConfig).toContain("auth: 'clerk'")
-    expect(starterConfig).toContain('ai: ["online-openrouter"]')
+    expect(starterConfig).toContain('providers: ["online-openrouter"]')
+    expect(starterConfig).toContain('openrouter: { model:')
     expect(starterConfig).toContain("payments: 'stripe'")
     expect(starterConfig).toContain("dx: 'full'")
     expect(starterConfig).toContain("preset: 'radix-blue'")
@@ -586,7 +590,7 @@ describe('cross-cutting — minimal config (all optional features disabled)', ()
   const minConfig: StarterConfig = {
     ui: 'tamagui',
     auth: 'none',
-    ai: [],
+    ai: { providers: [] },
     payments: 'none',
     dx: 'basic',
     preset: 'radix-green',
@@ -628,7 +632,7 @@ describe('cross-cutting — gluestack + clerk + stripe', () => {
   const config: StarterConfig = {
     ui: 'gluestack',
     auth: 'clerk',
-    ai: ['on-device-mlkit'],
+    ai: { providers: ['on-device-mlkit'] },
     payments: 'stripe',
     dx: 'full',
     preset: 'radix-green',
@@ -679,7 +683,7 @@ describe('ai provider templates', () => {
 
   it('renders executorch provider files when selected', async () => {
     tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-exec-'))
-    await renderFullProject(tmpDir, { ...DEFAULT_CONFIG, ai: ['on-device-executorch'] })
+    await renderFullProject(tmpDir, { ...DEFAULT_CONFIG, ai: { providers: ['on-device-executorch'] } })
 
     expect(await exists(path.join(tmpDir, 'src/providers/ai/executorch/index.ts'))).toBe(true)
     expect(await exists(path.join(tmpDir, 'src/providers/ai/executorch/useOnDeviceChat.ts'))).toBe(true)
@@ -787,7 +791,10 @@ describe('package.json dependencies per option combination', () => {
   it('ai pack installs union of provider expo packages', () => {
     const packs = getActivePacks({
       ...DEFAULT_CONFIG,
-      ai: ['on-device-mlkit', 'online-openrouter'],
+      ai: {
+        providers: ['on-device-mlkit', 'online-openrouter'],
+        openrouter: { model: 'openai/gpt-4o-mini' },
+      },
     })
     const aiPack = packs.find((p) => p.id === 'ai')
 
