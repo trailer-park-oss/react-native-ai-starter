@@ -31,8 +31,9 @@ export async function run(): Promise<void> {
       const partial: Partial<StarterConfig> = {}
       if (opts['ui']) partial.ui = opts['ui'] as StarterConfig['ui']
       if (opts['auth']) partial.auth = opts['auth'] as StarterConfig['auth']
-      if (opts['ai']) {
-        const rawAi = opts['ai']
+      const rawAi = opts['ai']
+      const hasAiFlag = Array.isArray(rawAi) ? rawAi.length > 0 : !!rawAi
+      if (hasAiFlag) {
         const values = Array.isArray(rawAi) ? rawAi : [rawAi]
         partial.ai = normalizeAi(values as string[])
       }
