@@ -56,6 +56,14 @@ export async function run(): Promise<void> {
   await program.parseAsync(process.argv)
 }
 
+export function assertNonEmptySelection(values: string[]): void {
+  if (values.length === 0) {
+    throw new Error(
+      'Select at least one option (press Space), including "none" if you want AI disabled.',
+    )
+  }
+}
+
 async function promptForMissing(partial: Partial<StarterConfig>): Promise<StarterConfig> {
   const config: StarterConfig = {
     ...DEFAULT_CONFIG,
@@ -91,6 +99,7 @@ async function promptForMissing(partial: Partial<StarterConfig>): Promise<Starte
         choices,
       })
       try {
+        assertNonEmptySelection(selected)
         const providers = normalizeAiProviders(selected)
         config.ai = { providers }
         break

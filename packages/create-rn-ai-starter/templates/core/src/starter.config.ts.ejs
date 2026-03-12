@@ -23,7 +23,7 @@ export interface StarterConfig {
 export interface AiConfig {
   providers: AiProvider[]
   openrouter?: { model: string }
-  executorch?: { model: string }
+  executorch?: { model: string; modelPath?: string }
 }
 
 export const starterConfig: StarterConfig = {
@@ -35,7 +35,12 @@ export const starterConfig: StarterConfig = {
     openrouter: { model: '<%= openrouterModel %>' },
 <% } -%>
 <% if (executorchModel) { -%>
-    executorch: { model: '<%= executorchModel %>' },
+    executorch: {
+      model: '<%= executorchModel %>',
+<% if (executorchModelPath) { -%>
+      modelPath: '<%= executorchModelPath %>',
+<% } -%>
+    },
 <% } -%>
   },
   payments: '<%= payments %>',

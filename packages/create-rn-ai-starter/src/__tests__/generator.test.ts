@@ -31,6 +31,7 @@ function toTemplateData(projectName: string, config: StarterConfig): TemplateDat
     aiProviders: providers,
     openrouterModel: config.ai.openrouter?.model,
     executorchModel: config.ai.executorch?.model,
+    executorchModelPath: config.ai.executorch?.modelPath,
     payments: config.payments,
     dx: config.dx,
     preset: config.preset,
@@ -122,6 +123,22 @@ describe('generator — template rendering', () => {
     const content = await readFile(path.join(tmpDir, 'src/starter.config.ts'), 'utf-8')
     expect(content).toContain('openrouter: { model:')
     expect(content).toContain('executorch: { model:')
+  })
+
+  it('starter.config.ts includes executorch modelPath when set', async () => {
+    tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-ai-exec-path-'))
+    const data = toTemplateData('exec-path', {
+      ...DEFAULT_CONFIG,
+      ai: {
+        providers: ['on-device-executorch'],
+        executorch: { model: 'LLAMA3_2_1B', modelPath: 'assets/models/llama3_2_1b.bin' },
+      },
+    })
+
+    await renderTemplates('core', tmpDir, data)
+
+    const content = await readFile(path.join(tmpDir, 'src/starter.config.ts'), 'utf-8')
+    expect(content).toContain('modelPath:')
   })
 
   it('starter.config.ts includes all required type definitions', async () => {

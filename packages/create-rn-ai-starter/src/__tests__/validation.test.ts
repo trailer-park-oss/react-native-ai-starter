@@ -85,6 +85,17 @@ describe('validateConfig', () => {
     expect(() => validateConfig(config)).toThrow('Invalid value "local-llama" for --ai')
   })
 
+  it('accepts executorch modelPath when provided', () => {
+    const config: StarterConfig = {
+      ...DEFAULT_CONFIG,
+      ai: {
+        providers: ['on-device-executorch'],
+        executorch: { model: 'LLAMA3_2_1B', modelPath: 'assets/models/llama3_2_1b.bin' },
+      },
+    }
+    expect(() => validateConfig(config)).not.toThrow()
+  })
+
   // it('rejects invalid payments value', () => {
   //   const config = { ...DEFAULT_CONFIG, payments: 'paypal' as StarterConfig['payments'] }
   //   expect(() => validateConfig(config)).toThrow('Invalid value "paypal" for --payments')

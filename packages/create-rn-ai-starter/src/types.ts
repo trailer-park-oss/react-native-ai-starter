@@ -23,7 +23,7 @@ export interface StarterConfig {
 export interface AiConfig {
   providers: AiProvider[]
   openrouter?: { model: string }
-  executorch?: { model: string }
+  executorch?: { model: string; modelPath?: string }
 }
 
 export interface PackContext {

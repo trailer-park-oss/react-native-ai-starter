@@ -10,6 +10,7 @@ export interface TemplateData {
   aiProviders: string[]
   openrouterModel?: string
   executorchModel?: string
+  executorchModelPath?: string
   payments: string
   dx: string
   preset: string

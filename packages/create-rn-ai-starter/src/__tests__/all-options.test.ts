@@ -31,6 +31,7 @@ function toTemplateData(projectName: string, config: StarterConfig): TemplateDat
     aiProviders: providers,
     openrouterModel: config.ai.openrouter?.model,
     executorchModel: config.ai.executorch?.model,
+    executorchModelPath: config.ai.executorch?.modelPath,
     payments: config.payments,
     dx: config.dx,
     preset: config.preset,

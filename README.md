@@ -107,6 +107,9 @@ Every generated project includes an AI tab with a chat interface. The provider i
 
 Both providers implement a shared `AiChatProvider` interface so swapping later is straightforward.
 
+> **ExecuTorch (on-device LLMs):** requires a dev build. It will not run in Expo Go.
+> Use `npx expo run:ios` or `npx expo run:android`, then `npx expo start --dev-client`.
+
 ### Theme presets
 
 All Radix-based presets include light and dark mode palettes:

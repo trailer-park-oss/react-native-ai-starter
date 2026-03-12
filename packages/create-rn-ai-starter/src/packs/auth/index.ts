@@ -17,6 +17,7 @@ function buildTemplateData(ctx: PackContext): TemplateData {
     aiProviders: providers,
     openrouterModel: ctx.config.ai.openrouter?.model,
     executorchModel: ctx.config.ai.executorch?.model,
+    executorchModelPath: ctx.config.ai.executorch?.modelPath,
     payments: ctx.config.payments,
     dx: ctx.config.dx,
     preset: ctx.config.preset,

@@ -78,4 +78,9 @@ export function validateConfig(config: StarterConfig): void {
       throw new Error('Missing model for provider: on-device-executorch')
     }
   }
+
+  const execPath = config.ai.executorch?.modelPath
+  if (typeof execPath !== 'undefined' && typeof execPath !== 'string') {
+    throw new Error('Invalid value for executorch.modelPath. Must be a string.')
+  }
 }
