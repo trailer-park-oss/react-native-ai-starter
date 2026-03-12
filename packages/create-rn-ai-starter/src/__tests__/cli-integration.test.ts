@@ -44,11 +44,29 @@ describe('CLI integration — built binary', () => {
       expect(stdout).toContain('project-path')
       expect(stdout).toContain('--ui')
       expect(stdout).toContain('--auth')
-      // expect(stdout).toContain('--ai')
+      expect(stdout).toContain('--ai')
       // expect(stdout).toContain('--payments')
       // expect(stdout).toContain('--dx')
       expect(stdout).toContain('--preset')
       expect(stdout).toContain('--yes')
+    })
+  })
+
+  describe('--ai', () => {
+    it('accepts repeated --ai flags', async () => {
+      const projectDir = path.join(os.tmpdir(), `rn-cli-ai-${Date.now()}`)
+      const { stderr } = await runCli([
+        projectDir,
+        '--yes',
+        '--ai',
+        'on-device-mlkit',
+        '--ai',
+        'online-openrouter',
+      ])
+
+      expect(stderr).not.toContain('Invalid')
+      const starterConfig = await readFile(path.join(projectDir, 'src', 'starter.config.ts'), 'utf-8')
+      expect(starterConfig).toContain('ai: ["on-device-mlkit","online-openrouter"]')
     })
   })
 
