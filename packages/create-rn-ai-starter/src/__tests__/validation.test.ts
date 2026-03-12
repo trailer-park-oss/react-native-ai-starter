@@ -15,7 +15,7 @@ describe('validateConfig', () => {
     const config: StarterConfig = {
       ui: 'gluestack',
       auth: 'clerk',
-      ai: ['online-openrouter'],
+      ai: { providers: ['online-openrouter'], openrouter: { model: 'openai/gpt-4o-mini' } },
       payments: 'stripe',
       dx: 'full',
       preset: 'radix-blue',
@@ -34,20 +34,54 @@ describe('validateConfig', () => {
   })
 
   it('accepts empty ai selection', () => {
-    const config = { ...DEFAULT_CONFIG, ai: [] }
+    const config = { ...DEFAULT_CONFIG, ai: { providers: [] } }
     expect(() => validateConfig(config)).not.toThrow()
   })
 
   it('accepts multiple ai providers', () => {
     const config = {
       ...DEFAULT_CONFIG,
-      ai: ['on-device-mlkit', 'online-openrouter'],
+      ai: {
+        providers: ['on-device-mlkit', 'online-openrouter'],
+        openrouter: { model: 'openai/gpt-4o-mini' },
+      },
     }
     expect(() => validateConfig(config)).not.toThrow()
   })
 
   it('rejects invalid ai values inside array', () => {
-    const config = { ...DEFAULT_CONFIG, ai: ['local-llama'] as StarterConfig['ai'] }
+    const config: StarterConfig = {
+      ...DEFAULT_CONFIG,
+      ai: { providers: ['local-llama' as StarterConfig['ai']['providers'][number]] },
+    }
+    expect(() => validateConfig(config)).toThrow('Invalid value "local-llama" for --ai')
+  })
+
+  it('accepts ai config with providers and models', () => {
+    const config: StarterConfig = {
+      ...DEFAULT_CONFIG,
+      ai: {
+        providers: ['online-openrouter', 'on-device-executorch'],
+        openrouter: { model: 'openai/gpt-4o-mini' },
+        executorch: { model: 'LLAMA3_2_1B' },
+      },
+    }
+    expect(() => validateConfig(config)).not.toThrow()
+  })
+
+  it('rejects ai config when provider is selected but model missing', () => {
+    const config: StarterConfig = {
+      ...DEFAULT_CONFIG,
+      ai: { providers: ['online-openrouter'] },
+    }
+    expect(() => validateConfig(config)).toThrow('Missing model for provider: online-openrouter')
+  })
+
+  it('rejects invalid ai provider values', () => {
+    const config: StarterConfig = {
+      ...DEFAULT_CONFIG,
+      ai: { providers: ['local-llama' as StarterConfig['ai']['providers'][number]] },
+    }
     expect(() => validateConfig(config)).toThrow('Invalid value "local-llama" for --ai')
   })
 

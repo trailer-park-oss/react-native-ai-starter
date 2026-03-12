@@ -1,7 +1,7 @@
 import { access, readdir } from 'node:fs/promises'
 import path from 'node:path'
 import type { StarterConfig } from '@/types.js'
-import { ALLOWED_VALUES } from '@/config.js'
+import { ALLOWED_AI_PROVIDERS, ALLOWED_VALUES } from '@/config.js'
 
 const PROJECT_NAME_RE = /^[a-zA-Z][a-zA-Z0-9_-]*$/
 
@@ -55,20 +55,27 @@ export function validateConfig(config: StarterConfig): void {
   const entries = Object.entries(ALLOWED_VALUES) as [keyof StarterConfig, readonly string[]][]
   for (const [key, allowed] of entries) {
     const value = config[key]
-    if (Array.isArray(value)) {
-      for (const item of value) {
-        if (!allowed.includes(item)) {
-          throw new Error(
-            `Invalid value "${item}" for --${key}. Allowed: ${allowed.join(', ')}`,
-          )
-        }
-      }
-      continue
-    }
     if (!allowed.includes(value)) {
       throw new Error(
         `Invalid value "${value}" for --${key}. Allowed: ${allowed.join(', ')}`,
       )
+    }
+  }
+
+  for (const provider of config.ai.providers) {
+    if (!ALLOWED_AI_PROVIDERS.includes(provider)) {
+      throw new Error(
+        `Invalid value "${provider}" for --ai. Allowed: ${ALLOWED_AI_PROVIDERS.join(', ')}`,
+      )
+    }
+  }
+
+  for (const provider of config.ai.providers) {
+    if (provider === 'online-openrouter' && !config.ai.openrouter?.model) {
+      throw new Error('Missing model for provider: online-openrouter')
+    }
+    if (provider === 'on-device-executorch' && !config.ai.executorch?.model) {
+      throw new Error('Missing model for provider: on-device-executorch')
     }
   }
 }

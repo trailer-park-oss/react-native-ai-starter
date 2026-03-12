@@ -14,10 +14,16 @@ export type ThemePreset =
 export interface StarterConfig {
   ui: UiProvider
   auth: AuthProvider
-  ai: AiProvider[]
+  ai: AiConfig
   payments: PaymentsProvider
   dx: DxProfile
   preset: ThemePreset
+}
+
+export interface AiConfig {
+  providers: AiProvider[]
+  openrouter?: { model: string }
+  executorch?: { model: string }
 }
 
 export interface PackContext {
