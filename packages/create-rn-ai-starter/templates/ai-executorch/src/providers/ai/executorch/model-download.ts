@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import * as FileSystem from 'expo-file-system'
+import * as FileSystem from 'expo-file-system/legacy'
 
 const MODEL_DIR = `${FileSystem.documentDirectory}executorch-models`
 const STORAGE_KEY = '@execuTorch:modelPath'

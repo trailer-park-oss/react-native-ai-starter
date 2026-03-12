@@ -19,7 +19,7 @@ import { useAiChat as useOpenRouterAiChat, AiChatProvider as OpenRouterProvider 
 <% } -%>
 <% if (hasExecuTorch) { -%>
 import { useAiChat as useExecuTorchAiChat, AiChatProvider as ExecuTorchProvider } from '@/providers/ai/executorch'
-import * as FileSystem from 'expo-file-system'
+import * as FileSystem from 'expo-file-system/legacy'
 import {
   downloadExecuTorchModel,
   getStoredModelPath,
