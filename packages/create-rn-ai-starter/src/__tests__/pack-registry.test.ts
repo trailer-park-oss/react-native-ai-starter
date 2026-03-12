@@ -41,18 +41,25 @@ describe('getActivePacks', () => {
     expect(ids).toContain('payments')
   })
 
-  it('always includes ai pack', () => {
+  it('includes ai pack when providers are selected', () => {
     const packs = getActivePacks(DEFAULT_CONFIG)
     const ids = packs.map((p) => p.id)
 
     expect(ids).toContain('ai')
   })
 
+  it('excludes ai pack when no providers are selected', () => {
+    const packs = getActivePacks({ ...DEFAULT_CONFIG, ai: [] })
+    const ids = packs.map((p) => p.id)
+
+    expect(ids).not.toContain('ai')
+  })
+
   it('maintains deterministic order: core, ui, auth, ai, payments, dx', () => {
     const config: StarterConfig = {
       ui: 'tamagui',
       auth: 'clerk',
-      ai: 'on-device-mlkit',
+      ai: ['on-device-mlkit'],
       payments: 'stripe',
       dx: 'full',
       preset: 'radix-green',
@@ -76,7 +83,7 @@ describe('pack ownership boundaries', () => {
     const allConfig: StarterConfig = {
       ui: 'tamagui',
       auth: 'clerk',
-      ai: 'on-device-mlkit',
+      ai: ['on-device-mlkit'],
       payments: 'stripe',
       dx: 'full',
       preset: 'radix-green',
@@ -103,7 +110,7 @@ describe('pack ownership boundaries', () => {
     const allConfig: StarterConfig = {
       ui: 'tamagui',
       auth: 'clerk',
-      ai: 'on-device-mlkit',
+      ai: ['on-device-mlkit'],
       payments: 'stripe',
       dx: 'full',
       preset: 'radix-green',
@@ -119,7 +126,7 @@ describe('pack ownership boundaries', () => {
     const allConfig: StarterConfig = {
       ui: 'tamagui',
       auth: 'clerk',
-      ai: 'on-device-mlkit',
+      ai: ['on-device-mlkit'],
       payments: 'stripe',
       dx: 'full',
       preset: 'radix-green',
