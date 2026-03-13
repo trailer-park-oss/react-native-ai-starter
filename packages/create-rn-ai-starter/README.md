@@ -1,6 +1,6 @@
 # create-rn-ai-starter
 
-CLI to scaffold Expo React Native projects with modular feature packs — including built-in AI chat powered by OpenRouter or on-device ML Kit.
+CLI to scaffold Expo React Native projects with modular feature packs — including built-in AI chat powered by OpenRouter, ExecuTorch, or ML Kit.
 
 ## Quick Start
 
@@ -35,10 +35,11 @@ npx create-rn-ai-starter .                        # scaffolds in cwd (must be em
 | --- | --- | --- |
 | `--ui <provider>` | `tamagui` \| `gluestack` | `tamagui` |
 | `--auth <provider>` | `clerk` \| `none` | `none` |
+| `--ai <provider>` | `online-openrouter` \| `on-device-executorch` \| `on-device-mlkit` (repeatable) | `online-openrouter` |
 | `--preset <theme>` | `radix-blue` \| `radix-green` \| `radix-purple` \| `radix-orange` \| `radix-cyan` \| `radix-red` | `radix-blue` |
 | `--yes` | — | Skip prompts, use defaults for unset flags |
 
-> **Note:** AI, payments, and DX profile options are not yet exposed as CLI flags. The generated project always includes the AI pack (defaults to `online-openrouter`). Payments defaults to `none` and DX defaults to `basic`.
+> **Note:** Payments and DX profile options are not yet exposed as CLI flags. Payments defaults to `none` and DX defaults to `basic`. AI providers can be selected via `--ai` flag.
 
 ### Examples
 
@@ -54,13 +55,19 @@ Pick specific providers:
 npx create-rn-ai-starter my-app --ui gluestack --auth clerk --preset radix-purple
 ```
 
+Select multiple AI providers:
+
+```bash
+npx create-rn-ai-starter my-app --ai online-openrouter --ai on-device-executorch --ai on-device-mlkit
+```
+
 Mix flags with interactive prompts for the rest:
 
 ```bash
 npx create-rn-ai-starter my-app --ui tamagui
 ```
 
-Interactive prompt order is: `ui -> auth -> preset`.
+Interactive prompt order is: `ui -> auth -> ai -> preset`.
 
 Scaffold inside an existing projects folder:
 
@@ -80,9 +87,10 @@ npx create-rn-ai-starter . --yes
 The CLI creates a new Expo project with:
 
 - **Core** — Expo Router file-based routing, onboarding flow (3 screens), tab navigation (Home, AI, Settings), login button, Zustand stores, React Query setup, provider resolvers, and a `starter.config.ts` manifest.
-- **UI** — Full design system with canonical tokens (colors, spacing, radius, typography), `ThemeProvider` with animated transitions, MMKV-persisted theme store, and library-specific components (Card, PrimaryButton, StatusBanner). Screens import directly from the selected UI library via the kit pattern — `tamagui` or `@gluestack-ui/themed`.
-- **AI** — AI chat screen with a shared provider interface (`ai.interface.ts`). Two back-end implementations:
-  - **OpenRouter** (`online-openrouter`, default) — streaming chat client, `useChat` / `useAiChat` hooks, and env config for API keys.
+- **UI** — Full design system with canonical tokens (colors, spacing, radius, typography), `ThemeProvider` with animated transitions, MMKV-persisted theme store, and library-specific components (Card, PrimaryButton, StatusBanner, ModelSelector). Screens import directly from the selected UI library via the kit pattern — `tamagui` or `@gluestack-ui/themed`.
+- **AI** — AI chat screen with a shared provider interface (`ai.interface.ts`). Three back-end implementations:
+  - **OpenRouter** (`online-openrouter`, default) — streaming chat client, `useChat` / `useAiChat` hooks, env config for API keys, and live model search from OpenRouter API.
+  - **ExecuTorch** (`on-device-executorch`) — on-device LLM inference with model download/management, search, and delete functionality. No API key needed; works fully offline.
   - **ML Kit** (`on-device-mlkit`) — on-device object detection via `@infinitered/react-native-mlkit-object-detection`, vision hook, and camera/image-picker integration.
 - **Auth** — Auth provider wiring, `(auth)` route group, and login button (when not `none`).
 - **DX** — Developer experience profile (linting, formatting, TypeScript strictness).
@@ -102,8 +110,8 @@ This is powered by a **kit pattern** in the CLI templates: a plain object maps c
 
 Every generated project includes an AI tab with a chat interface. The provider is selected at scaffold time (defaults to OpenRouter):
 
-- **OpenRouter** — calls cloud LLMs via the OpenRouter API with streaming responses. Requires an `OPENROUTER_API_KEY` environment variable at runtime. Models are fetched from the OpenRouter API with search functionality.
-- **ExecuTorch** — runs LLMs on-device with ExecuTorch. No API key needed; works fully offline. Select from popular mobile-optimized models with search in the CLI and UI.
+- **OpenRouter** — calls cloud LLMs via the OpenRouter API with streaming responses. Requires an `OPENROUTER_API_KEY` environment variable at runtime. Models are fetched live from OpenRouter API with full search functionality.
+- **ExecuTorch** — runs LLMs on-device with ExecuTorch. No API key needed; works fully offline. Includes comprehensive model download/management with search, download, and delete capabilities.
 - **ML Kit** — runs object detection on-device using React Native ML Kit. No API key needed; works fully offline.
 
 Both providers implement a shared `AiChatProvider` interface so swapping later is straightforward.
@@ -111,23 +119,48 @@ Both providers implement a shared `AiChatProvider` interface so swapping later i
 > **ExecuTorch (on-device LLMs):** requires a dev build. It will not run in Expo Go.
 > Use `npx expo run:ios` or `npx expo run:android`, then `npx expo start --dev-client`.
 
-#### Model Selection
+#### Model Selection & Management
 
-The CLI provides an interactive search for selecting AI models:
+**CLI Model Selection:**
+
+The CLI provides an interactive search for selecting AI models during scaffolding:
 
 **OpenRouter Models:**
 - Fetched live from `https://openrouter.ai/api/v1/models`
 - Includes pricing information
 - Search by model name, ID, or description
 - Fallback to curated list if API unavailable
+- 15+ models from various providers (OpenAI, Anthropic, Meta, Google, Mistral, etc.)
 
 **ExecuTorch Models:**
 - Curated list of mobile-optimized models
-- Includes Llama, Phi, Qwen, Gemma, Mistral, and Nemotron
+- Includes Llama 3.2, Phi-3, Qwen 2, Gemma 2, Mistral 7B, and Nemotron Super
 - Search by model name or description
 - No network fetch required for faster scaffolding
+- 13 popular models optimized for mobile deployment
 
-In the generated app, you can also change models from the AI screen using the model selector.
+**In-App Model Management:**
+
+After scaffolding, you can manage AI models directly from the AI screen:
+
+**OpenRouter:**
+- Search and select from available models
+- View pricing information
+- Change active model at runtime
+
+**ExecuTorch:**
+- **Download Models**: Browse and download on-device models
+- **Delete Models**: Remove downloaded models to free storage
+- **Search**: Filter available models by name or description
+- **Download Status**: Track download progress
+- **Model Status**: View which models are already downloaded (green checkmark)
+- **Current Model**: See active model with download status badge
+- **Change Model**: Switch between downloaded or available models
+
+All ExecuTorch models are stored locally and managed via:
+- AsyncStorage tracking of downloaded models
+- File system storage in `{documentDirectory}/execuTorch-models/`
+- Automatic cleanup and validation of model files
 
 ### Theme presets
 
@@ -168,30 +201,33 @@ my-app/
 │   │   ├── tokens.ts            # Canonical tokens — colors, spacing, radius, typography
 │   │   ├── ThemeProvider.tsx     # Reads store, resolves tokens, animated theme transitions
 │   │   └── elevation.ts         # Platform-aware card/modal/toast shadows
-│   ├── components/
-│   │   ├── Card.tsx             # Animated card with haptics — uses tamagui or gluestack directly
-│   │   ├── PrimaryButton.tsx    # Animated button with haptics
-│   │   └── StatusBanner.tsx     # Success/warning/critical/info banners
+  │   ├── components/
+  │   │   ├── Card.tsx             # Animated card with haptics — uses tamagui or gluestack directly
+  │   │   ├── PrimaryButton.tsx    # Animated button with haptics
+  │   │   ├── StatusBanner.tsx     # Success/warning/critical/info banners
+  │   │   └── ModelSelector.tsx    # AI model selection and management with search/download/delete
 │   ├── store/
 │   │   ├── index.ts             # Barrel export
 │   │   ├── onboarding.ts        # Zustand — onboarding state
 │   │   └── theme.ts             # Zustand + MMKV persist — preset & colorMode
-│   ├── lib/
-│   │   ├── query-client.ts      # TanStack Query client
-│   │   └── mmkv-storage.ts      # MMKV instance + Zustand StateStorage adapter
+  │   ├── lib/
+  │   │   ├── query-client.ts      # TanStack Query client
+  │   │   ├── mmkv-storage.ts      # MMKV instance + Zustand StateStorage adapter
+  │   │   └── model-fetcher.ts    # OpenRouter & ExecuTorch model fetching utilities
 │   └── providers/
 │       ├── ui/
 │       │   ├── index.ts          # Resolver — tamagui or gluestack
 │       │   └── tamagui/          # (or gluestack/) — library-specific config & provider
-│       ├── ai/
-│       │   ├── ai.interface.ts   # Shared AI provider interface
-│       │   ├── index.ts          # Barrel export
-│       │   └── openrouter/       # (or mlkit/) — provider-specific implementation
-│       │       ├── client.ts     # Streaming OpenRouter API client
-│       │       ├── useChat.ts    # Chat hook with message history
-│       │       ├── useAiChat.ts  # High-level chat hook
-│       │       ├── env.ts        # API key configuration
-│       │       └── index.ts
+  │       ├── ai/
+  │       │   ├── ai.interface.ts   # Shared AI provider interface
+  │       │   ├── index.ts          # Barrel export
+  │       │   └── openrouter/       # (or mlkit/executorch/) — provider-specific implementation
+  │       │       ├── client.ts     # Streaming OpenRouter API client
+  │       │       ├── useChat.ts    # Chat hook with message history
+  │       │       ├── useAiChat.ts  # High-level chat hook
+  │       │       ├── env.ts        # API key configuration
+  │       │       ├── model-download.ts # ExecuTorch model download/delete management
+  │       │       └── index.ts
 │       ├── auth/index.ts         # Resolver — clerk or no-op stub
 │       └── payments/index.ts     # Resolver — stripe or no-op stub
 ├── tamagui.config.ts             # (only when --ui tamagui)
