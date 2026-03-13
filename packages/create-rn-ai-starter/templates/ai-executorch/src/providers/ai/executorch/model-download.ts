@@ -1,14 +1,37 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import * as FileSystem from 'expo-file-system/legacy'
 
-const BASE_URL =
-  'https://huggingface.co/software-mansion/react-native-executorch-llama-3.2/resolve/v0.7.0/'
+interface ModelConfig {
+  repo: string
+  modelFile: string
+  tokenizerFiles: string[]
+}
 
-const FILES = ['ggml-llama-3.2-1b.bin', 'tokenizer.json', 'tokenizer_config.json']
+const MODEL_CONFIGS: Record<string, ModelConfig> = {
+  LLAMA3_2_1B: {
+    repo: 'software-mansion/react-native-executorch-llama-3.2',
+    modelFile: 'llama-3.2-1B/QLoRA/llama3_2_qat_lora.pte',
+    tokenizerFiles: ['tokenizer.json', 'tokenizer_config.json'],
+  },
+  LLAMA3_2_3B: {
+    repo: 'software-mansion/react-native-executorch-llama-3.2',
+    modelFile: 'llama-3.2-3B/QLoRA/llama3_2-3B_qat_lora.pte',
+    tokenizerFiles: ['tokenizer.json', 'tokenizer_config.json'],
+  },
+}
+
 const STORAGE_KEY = '@execuTorch:modelPath'
 
 function sanitizeModelId(modelId: string): string {
   return modelId.replace(/[^a-z0-9]/gi, '_').toLowerCase()
+}
+
+function getModelConfig(modelId: string): ModelConfig {
+  const config = MODEL_CONFIGS[modelId]
+  if (!config) {
+    throw new Error(`Unknown model ID: ${modelId}`)
+  }
+  return config
 }
 
 export async function getStoredModelPath(modelId: string): Promise<string | null> {
@@ -24,7 +47,7 @@ async function downloadFile(
     intermediates: true,
   })
   const download = FileSystem.createDownloadResumable(url, destination, {}, (event) => {
-    const progress = event.totalBytesWritten / (event.totalBytesExpectedToWrite || 1)
+    const progress = event.totalBytesWritten / (event.totalBytesExpectedToWrite ||1)
     onProgress?.(progress)
   })
   await download.downloadAsync()
@@ -34,24 +57,30 @@ export async function downloadExecuTorchModel(
   modelId: string,
   onProgress?: (progress: number) => void,
 ): Promise<string> {
+  const config = getModelConfig(modelId)
+  const baseUrl = `https://huggingface.co/${config.repo}/resolve/main/`
+
   const targetDir = `${FileSystem.documentDirectory}execuTorch-models/${sanitizeModelId(modelId)}`
   await FileSystem.makeDirectoryAsync(targetDir, { intermediates: true })
 
+  const files = [config.modelFile, ...config.tokenizerFiles]
   let overall = 0
-  const chunk = 1 / FILES.length
-  for (const fileName of FILES) {
-    const destination = `${targetDir}/${fileName}`
+  const chunk = 1 / files.length
+  for (const fileName of files) {
+    if (!fileName) continue
+    const destination = `${targetDir}/${fileName.split('/').pop()}`
     const info = await FileSystem.getInfoAsync(destination)
     if (info.exists) {
       overall += chunk
       continue
     }
-    await downloadFile(`${BASE_URL}${fileName}`, destination, (progress) => {
+    await downloadFile(`${baseUrl}${fileName}`, destination, (progress) => {
       onProgress?.(overall + progress * chunk)
     })
     overall += chunk
     onProgress?.(overall)
   }
-  await AsyncStorage.setItem(`${STORAGE_KEY}:${modelId}`, `${targetDir}/${FILES[0]}`)
-  return `${targetDir}/${FILES[0]}`
+  const modelFileName = config.modelFile.split('/').pop() || ''
+  await AsyncStorage.setItem(`${STORAGE_KEY}:${modelId}`, `${targetDir}/${modelFileName}`)
+  return `${targetDir}/${modelFileName}`
 }

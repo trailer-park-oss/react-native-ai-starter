@@ -2,11 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   useLLM,
   LLAMA3_2_1B,
+  LLAMA3_2_1B_QLORA,
   LLAMA3_2_3B,
-  QWEN2_5_0_5B,
-  QWEN2_5_1_5B,
-  PHI_4_MINI,
-  SMOLLM_2_360M,
+  LLAMA3_2_3B_QLORA,
   type Message,
 } from 'react-native-executorch'
 import type { ChatMessage, UseAiChatReturn } from '../ai.interface'
@@ -17,22 +15,29 @@ function createId(): string {
 }
 
 const MODEL_MAP = {
-  LLAMA3_2_1B,
-  LLAMA3_2_3B,
-  QWEN2_5_0_5B,
-  QWEN2_5_1_5B,
-  PHI_4_MINI,
-  SMOLLM_2_360M,
+  LLAMA3_2_1B: LLAMA3_2_1B_QLORA,
+  LLAMA3_2_3B: LLAMA3_2_3B_QLORA,
 } as const
 
 type ModelId = keyof typeof MODEL_MAP
 
 export function useOnDeviceChat(options?: { modelId?: ModelId; modelPath?: string }): UseAiChatReturn {
   const modelId = options?.modelId ?? 'LLAMA3_2_1B'
-  const llm = useLLM({
-    model: MODEL_MAP[modelId],
-    modelPath: options?.modelPath,
-  })
+  const defaultModel = MODEL_MAP[modelId]
+
+  let model
+  if (options?.modelPath) {
+    const dir = options.modelPath.substring(0, options.modelPath.lastIndexOf('/'))
+    model = {
+      modelSource: options.modelPath,
+      tokenizerSource: `${dir}/tokenizer.json`,
+      tokenizerConfigSource: `${dir}/tokenizer_config.json`,
+    }
+  } else {
+    model = defaultModel
+  }
+
+  const llm = useLLM({ model })
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -49,9 +54,14 @@ export function useOnDeviceChat(options?: { modelId?: ModelId; modelPath?: strin
     }
   }, [llm.error])
 
-  const sendMessage = useCallback(async (text: string) => {
+  const sendMessage = useCallback(async (text: string, imageUri?: string) => {
     setError(null)
     if (!text.trim()) return
+
+    if (imageUri) {
+      setError('This model does not support image input. Please use a text-only message or switch to a model that supports images.')
+      return
+    }
 
     const userMsg: ChatMessage = {
       id: createId(),

@@ -4,14 +4,52 @@ import path from 'node:path'
 import https from 'node:https'
 import { pipeline } from 'node:stream/promises'
 
-const BASE_URL =
-  'https://huggingface.co/software-mansion/react-native-executorch-llama-3.2/resolve/v0.7.0/'
+interface ModelConfig {
+  repo: string
+  modelFile: string
+  tokenizerFiles: string[]
+}
 
-const FILES = [
-  'ggml-llama-3.2-1b.bin',
-  'tokenizer.json',
-  'tokenizer_config.json',
-]
+const MODEL_CONFIGS: Record<string, ModelConfig> = {
+  LLAMA3_2_1B: {
+    repo: 'software-mansion/react-native-executorch-llama-3.2',
+    modelFile: 'llama-3.2-1B/QLoRA/llama3_2_qat_lora.pte',
+    tokenizerFiles: ['tokenizer.json', 'tokenizer_config.json'],
+  },
+  LLAMA3_2_3B: {
+    repo: 'software-mansion/react-native-executorch-llama-3.2',
+    modelFile: 'llama-3.2-3B/QLoRA/llama3_2-3B_qat_lora.pte',
+    tokenizerFiles: ['tokenizer.json', 'tokenizer_config.json'],
+  },
+  QWEN2_5_0_5B: {
+    repo: 'software-mansion/react-native-executorch-qwen-2.5',
+    modelFile: 'qwen-2.5-0.5B/quantized/qwen2_5_0_5b_8da4w.pte',
+    tokenizerFiles: ['tokenizer.json', 'tokenizer_config.json'],
+  },
+  QWEN2_5_1_5B: {
+    repo: 'software-mansion/react-native-executorch-qwen-2.5',
+    modelFile: 'qwen-2.5-1.5B/quantized/qwen2_5_1_5b_8da4w.pte',
+    tokenizerFiles: ['tokenizer.json', 'tokenizer_config.json'],
+  },
+  SMOLLM_2_360M: {
+    repo: 'software-mansion/react-native-executorch-smolLm-2',
+    modelFile: 'smolLm-2-360M/quantized/smolLm2_360M_8da4w.pte',
+    tokenizerFiles: ['tokenizer.json', 'tokenizer_config.json'],
+  },
+  PHI_4_MINI: {
+    repo: 'software-mansion/react-native-executorch-phi-4',
+    modelFile: '',
+    tokenizerFiles: [],
+  },
+}
+
+function getModelConfig(modelId: string): ModelConfig {
+  const config = MODEL_CONFIGS[modelId]
+  if (!config) {
+    throw new Error(`Unknown model ID: ${modelId}`)
+  }
+  return config
+}
 
 function sanitizeModelId(modelId: string): string {
   return modelId.replace(/[^a-z0-9]/gi, '_').toLowerCase()
@@ -48,13 +86,18 @@ export async function downloadExecuTorchModel(
   modelId: string,
   onProgress?: (progress: number) => void,
 ): Promise<string> {
+  const config = getModelConfig(modelId)
+  const baseUrl = `https://huggingface.co/${config.repo}/resolve/main/`
+
   const targetDir = path.join(projectDir, 'assets', 'models', sanitizeModelId(modelId))
   await mkdir(targetDir, { recursive: true })
 
+  const files = [config.modelFile, ...config.tokenizerFiles]
   let overall = 0
-  const chunk = 1 / FILES.length
-  for (const fileName of FILES) {
-    const targetPath = path.join(targetDir, fileName)
+  const chunk = 1 / files.length
+  for (const fileName of files) {
+    if (!fileName) continue
+    const targetPath = path.join(targetDir, path.basename(fileName))
     try {
       await stat(targetPath)
       overall += chunk
@@ -64,7 +107,7 @@ export async function downloadExecuTorchModel(
     }
 
     await downloadFile(
-      `${BASE_URL}${fileName}`,
+      `${baseUrl}${fileName}`,
       targetPath,
       (downloaded, total) => {
         const fileProgress = total ? downloaded / total : 0
@@ -75,5 +118,5 @@ export async function downloadExecuTorchModel(
     onProgress?.(overall)
   }
 
-  return path.join(targetDir, FILES[0])
+  return path.join(targetDir, path.basename(config.modelFile))
 }

@@ -4,7 +4,6 @@ import { DEFAULT_CONFIG, ALLOWED_AI_PROVIDERS, ALLOWED_VALUES } from '@/config.j
 import { runGenerator } from '@/generator.js'
 import { resolveProjectPath, validateConfig } from '@/utils/validation.js'
 import { createLogger } from '@/utils/logger.js'
-import { downloadExecuTorchModel } from '@/utils/executorch-download.js'
 import path from 'node:path'
 import type { StarterConfig } from '@/types.js'
 
@@ -157,10 +156,6 @@ const OPENROUTER_MODELS = [
 const EXECUTORCH_MODELS = [
   'LLAMA3_2_1B',
   'LLAMA3_2_3B',
-  'QWEN2_5_0_5B',
-  'QWEN2_5_1_5B',
-  'PHI_4_MINI',
-  'SMOLLM_2_360M',
 ] as const
 
 const DEFAULT_OPENROUTER_MODEL = OPENROUTER_MODELS[0]
@@ -230,27 +225,14 @@ async function handleExecuTorchDownload(
 
   const execConfig = config.ai.executorch ?? { model: DEFAULT_EXECUTORCH_MODEL }
   execConfig.model ||= DEFAULT_EXECUTORCH_MODEL
-  config.ai.executorch = execConfig
 
   if (execConfig.modelPath) {
     return
   }
 
-  const shouldDownload = interactive
-    ? await confirm({
-        message: 'Download ExecuTorch model now?',
-        initial: true,
-      })
-    : true
-
-  if (!shouldDownload) {
-    return
+  if (interactive) {
+    logger.info('The ExecuTorch model will be downloaded on first launch of the app.')
   }
 
-  logger.info(`Downloading ExecuTorch model "${execConfig.model}"…`)
-  const targetPath = await downloadExecuTorchModel(projectDir, execConfig.model, (progress) => {
-    logger.info(`ExecuTorch download ${Math.round(progress * 100)}%`)
-  })
-  execConfig.modelPath = path.relative(projectDir, targetPath)
-  logger.info(`ExecuTorch model saved to ${execConfig.modelPath}`)
+  config.ai.executorch = execConfig
 }
