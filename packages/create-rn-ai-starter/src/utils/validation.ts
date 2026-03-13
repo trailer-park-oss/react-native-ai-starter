@@ -55,7 +55,7 @@ export function validateConfig(config: StarterConfig): void {
   const entries = Object.entries(ALLOWED_VALUES) as [keyof StarterConfig, readonly string[]][]
   for (const [key, allowed] of entries) {
     const value = config[key]
-    if (!allowed.includes(value)) {
+    if (typeof value !== 'string' || !allowed.includes(value)) {
       throw new Error(
         `Invalid value "${value}" for --${key}. Allowed: ${allowed.join(', ')}`,
       )

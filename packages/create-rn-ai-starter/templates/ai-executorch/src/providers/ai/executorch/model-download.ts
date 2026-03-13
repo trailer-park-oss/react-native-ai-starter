@@ -21,6 +21,7 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
 }
 
 const STORAGE_KEY = '@execuTorch:modelPath'
+const DOWNLOADED_MODELS_KEY = '@execuTorch:downloadedModels'
 
 function sanitizeModelId(modelId: string): string {
   return modelId.replace(/[^a-z0-9]/gi, '_').toLowerCase()
@@ -36,6 +37,44 @@ function getModelConfig(modelId: string): ModelConfig {
 
 export async function getStoredModelPath(modelId: string): Promise<string | null> {
   return AsyncStorage.getItem(`${STORAGE_KEY}:${modelId}`)
+}
+
+export async function getAllDownloadedModels(): Promise<string[]> {
+  try {
+    const data = await AsyncStorage.getItem(DOWNLOADED_MODELS_KEY)
+    return data ? JSON.parse(data) : []
+  } catch {
+    return []
+  }
+}
+
+async function saveDownloadedModels(models: string[]): Promise<void> {
+  await AsyncStorage.setItem(DOWNLOADED_MODELS_KEY, JSON.stringify(models))
+}
+
+export async function isModelDownloaded(modelId: string): Promise<boolean> {
+  const path = await getStoredModelPath(modelId)
+  if (!path) return false
+  const info = await FileSystem.getInfoAsync(path)
+  return info.exists
+}
+
+export async function deleteExecuTorchModel(modelId: string): Promise<void> {
+  const path = await getStoredModelPath(modelId)
+  if (!path) return
+
+  const dir = path.substring(0, path.lastIndexOf('/'))
+  try {
+    await FileSystem.deleteAsync(dir, { idempotent: true })
+  } catch {
+    // Ignore errors when directory doesn't exist
+  }
+
+  await AsyncStorage.removeItem(`${STORAGE_KEY}:${modelId}`)
+
+  const downloaded = await getAllDownloadedModels()
+  const updated = downloaded.filter((id) => id !== modelId)
+  await saveDownloadedModels(updated)
 }
 
 async function downloadFile(
@@ -82,5 +121,11 @@ export async function downloadExecuTorchModel(
   }
   const modelFileName = config.modelFile.split('/').pop() || ''
   await AsyncStorage.setItem(`${STORAGE_KEY}:${modelId}`, `${targetDir}/${modelFileName}`)
+
+  const downloaded = await getAllDownloadedModels()
+  if (!downloaded.includes(modelId)) {
+    await saveDownloadedModels([...downloaded, modelId])
+  }
+
   return `${targetDir}/${modelFileName}`
 }

@@ -27,6 +27,7 @@ export const DEFAULT_CONFIG: StarterConfig = {
   ai: {
     providers: ['online-openrouter'],
     openrouter: { model: 'openai/gpt-4o-mini' },
+    executorch: { model: 'LLAMA3_2_1B' },
   },
   payments: 'none',
   dx: 'basic',

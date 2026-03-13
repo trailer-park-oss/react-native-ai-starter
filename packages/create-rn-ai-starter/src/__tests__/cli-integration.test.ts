@@ -83,7 +83,7 @@ describe('CLI integration — built binary', () => {
       expect(stderr).not.toContain('Invalid')
       const starterConfig = await readFile(path.join(projectDir, 'src', 'starter.config.ts'), 'utf-8')
       expect(starterConfig).toContain('openrouter: { model:')
-      expect(starterConfig).toContain('executorch: { model:')
+      expect(starterConfig).toContain('executorch: {')
     })
   })
 

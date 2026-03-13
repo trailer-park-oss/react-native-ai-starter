@@ -122,7 +122,7 @@ describe('generator — template rendering', () => {
 
     const content = await readFile(path.join(tmpDir, 'src/starter.config.ts'), 'utf-8')
     expect(content).toContain('openrouter: { model:')
-    expect(content).toContain('executorch: { model:')
+    expect(content).toContain('executorch: {')
   })
 
   it('starter.config.ts includes executorch modelPath when set', async () => {

@@ -58,6 +58,7 @@ export function createAiPack(config: StarterConfig): FeaturePack {
     expoInstallPackages: Array.from(expoInstallPackages),
     ownedPaths: [
       'src/providers/ai/',
+      'src/lib/model-fetcher.ts',
       'app/(app)/ai.tsx',
     ],
     async generate(ctx: PackContext) {

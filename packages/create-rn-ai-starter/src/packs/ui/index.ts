@@ -127,6 +127,8 @@ export function createUiPack(config: StarterConfig): FeaturePack {
           fileExists(ctx.projectDir, 'src/components/StatusBanner.tsx')),
         check('PrimaryButton component exists', () =>
           fileExists(ctx.projectDir, 'src/components/PrimaryButton.tsx')),
+        check('ModelSelector component exists', () =>
+          fileExists(ctx.projectDir, 'src/components/ModelSelector.tsx')),
       ]
 
       const checks = await Promise.all([...sharedChecks, ...libraryChecks, ...componentChecks])

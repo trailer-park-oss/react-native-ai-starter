@@ -102,13 +102,32 @@ This is powered by a **kit pattern** in the CLI templates: a plain object maps c
 
 Every generated project includes an AI tab with a chat interface. The provider is selected at scaffold time (defaults to OpenRouter):
 
-- **OpenRouter** — calls cloud LLMs via the OpenRouter API with streaming responses. Requires an `OPENROUTER_API_KEY` environment variable at runtime.
+- **OpenRouter** — calls cloud LLMs via the OpenRouter API with streaming responses. Requires an `OPENROUTER_API_KEY` environment variable at runtime. Models are fetched from the OpenRouter API with search functionality.
+- **ExecuTorch** — runs LLMs on-device with ExecuTorch. No API key needed; works fully offline. Select from popular mobile-optimized models with search in the CLI and UI.
 - **ML Kit** — runs object detection on-device using React Native ML Kit. No API key needed; works fully offline.
 
 Both providers implement a shared `AiChatProvider` interface so swapping later is straightforward.
 
 > **ExecuTorch (on-device LLMs):** requires a dev build. It will not run in Expo Go.
 > Use `npx expo run:ios` or `npx expo run:android`, then `npx expo start --dev-client`.
+
+#### Model Selection
+
+The CLI provides an interactive search for selecting AI models:
+
+**OpenRouter Models:**
+- Fetched live from `https://openrouter.ai/api/v1/models`
+- Includes pricing information
+- Search by model name, ID, or description
+- Fallback to curated list if API unavailable
+
+**ExecuTorch Models:**
+- Curated list of mobile-optimized models
+- Includes Llama, Phi, Qwen, Gemma, Mistral, and Nemotron
+- Search by model name or description
+- No network fetch required for faster scaffolding
+
+In the generated app, you can also change models from the AI screen using the model selector.
 
 ### Theme presets
 

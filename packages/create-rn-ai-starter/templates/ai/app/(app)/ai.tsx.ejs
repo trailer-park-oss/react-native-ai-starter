@@ -16,6 +16,7 @@ import * as ImagePicker from 'expo-image-picker'
 import { useTokens } from '@/design-system'
 <% if (hasOpenRouter) { -%>
 import { useAiChat as useOpenRouterAiChat, AiChatProvider as OpenRouterProvider } from '@/providers/ai/openrouter'
+import { fetchOpenRouterModels } from '@/lib/model-fetcher'
 <% } -%>
 <% if (hasExecuTorch) { -%>
 import { useAiChat as useExecuTorchAiChat, AiChatProvider as ExecuTorchProvider } from '@/providers/ai/executorch'
@@ -23,12 +24,17 @@ import * as FileSystem from 'expo-file-system/legacy'
 import {
   downloadExecuTorchModel,
   getStoredModelPath,
+  getAllDownloadedModels,
+  isModelDownloaded,
+  deleteExecuTorchModel,
 } from '@/providers/ai/executorch/model-download'
+import { fetchExecuTorchModels } from '@/lib/model-fetcher'
 <% } -%>
 <% if (hasMlkit) { -%>
 import { MLKitProvider, useVision } from '@/providers/ai/mlkit'
 <% } -%>
 import type { ChatMessage, UseAiChatReturn } from '@/providers/ai/ai.interface'
+import { ModelSearch, ModelSelector } from '@/components/ModelSelector'
 
 type ProviderId = 'openrouter' | 'executorch' | 'mlkit'
 
@@ -526,12 +532,19 @@ function VisionPanel() {
 export default function AiScreen() {
   const { colors, spacing, radius, typography } = useTokens()
   const [activeProvider, setActiveProvider] = useState<ProviderId>(PROVIDERS[0].id)
+<% if (hasOpenRouter) { -%>
+  const [openRouterModel, setOpenRouterModel] = useState(OPENROUTER_MODEL)
+  const [showOpenRouterModal, setShowOpenRouterModal] = useState(false)
+<% } -%>
 <% if (hasExecuTorch) { -%>
+  const [execModel, setExecModel] = useState(EXECUTORCH_MODEL)
   const [execModelPath, setExecModelPath] = useState<string | null>(EXECUTORCH_STORED_PATH)
   const [execModelStatus, setExecModelStatus] = useState<'missing' | 'ready' | 'downloading' | 'failed'>(EXECUTORCH_STATUS_INITIAL)
   const [execDownloadMessage, setExecDownloadMessage] = useState<string | null>(null)
   const [execDownloadProgress, setExecDownloadProgress] = useState(0)
-
+  const [showExecuTorchModal, setShowExecuTorchModal] = useState(false)
+  const [downloadedModels, setDownloadedModels] = useState<string[]>([])
+  const [refreshModelsKey, setRefreshModelsKey] = useState(0)
   useEffect(() => {
     if (execModelPath) {
       FileSystem.getInfoAsync(execModelPath).then((info) => {
@@ -546,7 +559,7 @@ export default function AiScreen() {
   useEffect(() => {
     if (execModelPath) return
     let cancelled = false
-    getStoredModelPath(EXECUTORCH_MODEL).then((stored) => {
+    getStoredModelPath(execModel).then((stored) => {
       if (cancelled || !stored) return
       FileSystem.getInfoAsync(stored).then((info) => {
         if (info.exists) {
@@ -558,14 +571,20 @@ export default function AiScreen() {
     return () => {
       cancelled = true
     }
-  }, [EXECUTORCH_MODEL])
+  }, [execModel])
+
+  useEffect(() => {
+    if (showExecuTorchModal) {
+      getAllDownloadedModels().then(setDownloadedModels)
+    }
+  }, [showExecuTorchModal, refreshModelsKey])
 
   const handleExecDownload = useCallback(async () => {
     setExecModelStatus('downloading')
     setExecDownloadMessage(null)
     setExecDownloadProgress(0)
     try {
-      const path = await downloadExecuTorchModel(EXECUTORCH_MODEL, (progress) => {
+      const path = await downloadExecuTorchModel(execModel, (progress) => {
         setExecDownloadProgress(progress)
       })
       setExecModelPath(path)
@@ -574,7 +593,7 @@ export default function AiScreen() {
       setExecModelStatus('failed')
       setExecDownloadMessage(err instanceof Error ? err.message : 'Download failed')
     }
-  }, [])
+  }, [execModel])
 
   const execStatusLabel =
     execModelStatus === 'ready'
@@ -584,6 +603,35 @@ export default function AiScreen() {
       : execModelStatus === 'failed'
       ? 'Download failed'
       : 'ExecuTorch model not downloaded yet'
+
+  const handleModelDownload = useCallback(async (model: { id: string; name: string; description: string }) => {
+    try {
+      await downloadExecuTorchModel(model.id)
+      setDownloadedModels((prev) => [...prev, model.id])
+      setRefreshModelsKey((prev) => prev + 1)
+      if (model.id === execModel) {
+        const path = await getStoredModelPath(model.id)
+        setExecModelPath(path)
+        setExecModelStatus('ready')
+      }
+    } catch (err) {
+      throw err instanceof Error ? err : new Error('Download failed')
+    }
+  }, [execModel])
+
+  const handleModelDelete = useCallback(async (model: { id: string; name: string; description: string }) => {
+    try {
+      await deleteExecuTorchModel(model.id)
+      setDownloadedModels((prev) => prev.filter((id) => id !== model.id))
+      setRefreshModelsKey((prev) => prev + 1)
+      if (model.id === execModel) {
+        setExecModelPath(null)
+        setExecModelStatus('missing')
+      }
+    } catch (err) {
+      throw err instanceof Error ? err : new Error('Delete failed')
+    }
+  }, [execModel])
 <% } -%>
 
   const hasMultiple = PROVIDERS.length > 1
@@ -664,7 +712,7 @@ export default function AiScreen() {
             <ChatPanel
               title={PROVIDERS.find((p) => p.id === 'openrouter')?.title ?? 'AI Chat'}
               subtitle={PROVIDERS.find((p) => p.id === 'openrouter')?.subtitle ?? ''}
-              useChatHook={() => useOpenRouterAiChat({ model: OPENROUTER_MODEL })}
+              useChatHook={() => useOpenRouterAiChat({ model: openRouterModel })}
             />
           </OpenRouterProvider>
         )
@@ -678,7 +726,7 @@ export default function AiScreen() {
               subtitle={PROVIDERS.find((p) => p.id === 'executorch')?.subtitle ?? ''}
               useChatHook={() =>
                 useExecuTorchAiChat({
-                  modelId: EXECUTORCH_MODEL,
+                  modelId: execModel,
                   modelPath: execModelPath ?? undefined,
                 })
               }
@@ -740,10 +788,50 @@ export default function AiScreen() {
           })}
         </<%= uiKit.HStack %>>
       )}
+<% if (hasOpenRouter) { -%>
+      {activeProvider === 'openrouter' && (
+        <ModelSelector
+          selectedModel={openRouterModel}
+          modelName={openRouterModel}
+          onShowSelector={() => setShowOpenRouterModal(true)}
+        />
+      )}
+<% } -%>
 <% if (hasExecuTorch) { -%>
+      {activeProvider === 'executorch' && (
+        <ModelSelector
+          selectedModel={execModel}
+          modelName={execModel.replace(/_/g, ' ')}
+          onShowSelector={() => setShowExecuTorchModal(true)}
+          isDownloaded={execModelStatus === 'ready'}
+        />
+      )}
       {renderExecuTorchStatus()}
 <% } -%>
       {renderProvider()}
+
+<% if (hasOpenRouter) { -%>
+      <ModelSearch
+        visible={showOpenRouterModal}
+        onClose={() => setShowOpenRouterModal(false)}
+        onSelect={(model) => setOpenRouterModel(model.id)}
+        fetchModels={fetchOpenRouterModels}
+        initialSelectedId={openRouterModel}
+      />
+<% } -%>
+<% if (hasExecuTorch) { -%>
+      <ModelSearch
+        visible={showExecuTorchModal}
+        onClose={() => setShowExecuTorchModal(false)}
+        onSelect={(model) => setExecModel(model.id)}
+        fetchModels={fetchExecuTorchModels}
+        initialSelectedId={execModel}
+        isExecuTorch={true}
+        downloadedModels={downloadedModels}
+        onDownload={handleModelDownload}
+        onDelete={handleModelDelete}
+      />
+<% } -%>
     </<%= uiKit.VStack %>>
   )
 }
