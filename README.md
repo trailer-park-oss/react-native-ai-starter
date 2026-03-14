@@ -35,10 +35,11 @@ npx create-rn-ai-starter .                        # scaffolds in cwd (must be em
 | --- | --- | --- |
 | `--ui <provider>` | `tamagui` \| `gluestack` | `tamagui` |
 | `--auth <provider>` | `clerk` \| `none` | `none` |
+| `--ai <provider>` | `online-openrouter` \| `on-device-executorch` \| `on-device-mlkit` (repeatable) | `online-openrouter` |
 | `--preset <theme>` | `radix-blue` \| `radix-green` \| `radix-purple` \| `radix-orange` \| `radix-cyan` \| `radix-red` | `radix-blue` |
 | `--yes` | — | Skip prompts, use defaults for unset flags |
 
-> **Note:** AI, payments, and DX profile options are not yet exposed as CLI flags. The generated project always includes the AI pack (defaults to `online-openrouter`). Payments defaults to `none` and DX defaults to `basic`.
+> **Note:** The `--ai` flag is repeatable for selecting multiple AI providers. For example: `--ai online-openrouter --ai on-device-executorch`.
 
 ### Examples
 
@@ -52,6 +53,12 @@ Pick specific providers:
 
 ```bash
 npx create-rn-ai-starter my-app --ui gluestack --auth clerk --preset radix-purple
+```
+
+Select multiple AI providers:
+
+```bash
+npx create-rn-ai-starter my-app --ai online-openrouter --ai on-device-executorch
 ```
 
 Mix flags with interactive prompts for the rest:
@@ -79,10 +86,11 @@ npx create-rn-ai-starter . --yes
 
 The CLI creates a new Expo project with:
 
-- **Core** — Expo Router file-based routing, onboarding flow (3 screens), tab navigation (Home, AI, Settings), login button, Zustand stores, React Query setup, provider resolvers, and a `starter.config.ts` manifest.
-- **UI** — Full design system with canonical tokens (colors, spacing, radius, typography), `ThemeProvider` with animated transitions, MMKV-persisted theme store, and library-specific components (Card, PrimaryButton, StatusBanner). Screens import directly from the selected UI library via the kit pattern — `tamagui` or `@gluestack-ui/themed`.
-- **AI** — AI chat screen with a shared provider interface (`ai.interface.ts`). Two back-end implementations:
-  - **OpenRouter** (`online-openrouter`, default) — streaming chat client, `useChat` / `useAiChat` hooks, and env config for API keys.
+- **Core** — Expo Router file-based routing, onboarding flow (3 screens with persisted completion state), tab navigation (Home, AI, Settings), login button, Zustand stores, React Query setup, provider resolvers, and a `starter.config.ts` manifest.
+- **UI** — Full design system with canonical tokens (colors, spacing, radius, typography), `ThemeProvider` with animated transitions, MMKV-persisted theme store, and library-specific components (Card, PrimaryButton, StatusBanner, ModelSelector). Screens import directly from the selected UI library via the kit pattern — `tamagui` or `@gluestack-ui/themed`.
+- **AI** — AI chat screen with a shared provider interface (`ai.interface.ts`). Three back-end implementations:
+  - **OpenRouter** (`online-openrouter`, default) — streaming chat client, `useChat` / `useAiChat` hooks, and env config for API keys. Includes model selector with live API fetch.
+  - **ExecuTorch** (`on-device-executorch`) — on-device LLM inference with model download on first launch, streaming responses, and model selector.
   - **ML Kit** (`on-device-mlkit`) — on-device object detection via `@infinitered/react-native-mlkit-object-detection`, vision hook, and camera/image-picker integration.
 - **Auth** — Auth provider wiring, `(auth)` route group, and login button (when not `none`).
 - **DX** — Developer experience profile (linting, formatting, TypeScript strictness).
@@ -100,15 +108,39 @@ This is powered by a **kit pattern** in the CLI templates: a plain object maps c
 
 ### AI providers
 
-Every generated project includes an AI tab with a chat interface. The provider is selected at scaffold time (defaults to OpenRouter):
+Every generated project includes an AI tab with a chat interface. You can select one or more AI providers at scaffold time:
 
-- **OpenRouter** — calls cloud LLMs via the OpenRouter API with streaming responses. Requires an `OPENROUTER_API_KEY` environment variable at runtime.
-- **ML Kit** — runs object detection on-device using React Native ML Kit. No API key needed; works fully offline.
+- **OpenRouter** (`online-openrouter`) — calls cloud LLMs via the OpenRouter API with streaming responses. Requires an `OPENROUTER_API_KEY` environment variable at runtime. Models are fetched from the OpenRouter API with search functionality.
+- **ExecuTorch** (`on-device-executorch`) — runs LLMs on-device with ExecuTorch. No API key needed; works fully offline. Select from popular mobile-optimized models with search in the CLI and UI.
+- **ML Kit** (`on-device-mlkit`) — runs object detection on-device using React Native ML Kit. No API key needed; works fully offline.
+
+You can select multiple AI providers using the interactive CLI or by repeating the `--ai` flag:
+```bash
+npx create-rn-ai-starter my-app --ai online-openrouter --ai on-device-executorch
+```
 
 Both providers implement a shared `AiChatProvider` interface so swapping later is straightforward.
 
 > **ExecuTorch (on-device LLMs):** requires a dev build. It will not run in Expo Go.
 > Use `npx expo run:ios` or `npx expo run:android`, then `npx expo start --dev-client`.
+
+#### Model Selection
+
+The CLI provides an interactive search for selecting AI models:
+
+**OpenRouter Models:**
+- Fetched live from `https://openrouter.ai/api/v1/models`
+- Includes pricing information
+- Search by model name, ID, or description
+- Fallback to curated list if API unavailable
+
+**ExecuTorch Models:**
+- Curated list of mobile-optimized models
+- Includes Llama, Phi, Qwen, Gemma, Mistral, and Nemotron
+- Search by model name or description
+- No network fetch required for faster scaffolding
+
+In the generated app, you can also change models from the AI screen using the model selector.
 
 ### Theme presets
 
@@ -152,14 +184,16 @@ my-app/
 │   ├── components/
 │   │   ├── Card.tsx             # Animated card with haptics — uses tamagui or gluestack directly
 │   │   ├── PrimaryButton.tsx    # Animated button with haptics
-│   │   └── StatusBanner.tsx     # Success/warning/critical/info banners
+│   │   ├── StatusBanner.tsx     # Success/warning/critical/info banners
+│   │   └── ModelSelector.tsx    # AI model selector with search (when AI enabled)
 │   ├── store/
 │   │   ├── index.ts             # Barrel export
 │   │   ├── onboarding.ts        # Zustand — onboarding state
 │   │   └── theme.ts             # Zustand + MMKV persist — preset & colorMode
 │   ├── lib/
 │   │   ├── query-client.ts      # TanStack Query client
-│   │   └── mmkv-storage.ts      # MMKV instance + Zustand StateStorage adapter
+│   │   ├── mmkv-storage.ts      # MMKV instance + Zustand StateStorage adapter
+│   │   └── model-fetcher.ts     # Model download utility (when ExecuTorch enabled)
 │   └── providers/
 │       ├── ui/
 │       │   ├── index.ts          # Resolver — tamagui or gluestack
@@ -183,15 +217,33 @@ my-app/
 
 ## After Scaffolding
 
+For OpenRouter only:
+
 ```bash
 cd my-app
-npx expo start
+OPENROUTER_API_KEY=sk-or-... npx expo start
 ```
 
-For OpenRouter AI, set your API key before running:
+For ExecuTorch or ML Kit (requires dev build):
 
 ```bash
-OPENROUTER_API_KEY=sk-or-... npx expo start
+cd my-app
+npx expo run:ios
+# or
+npx expo run:android
+
+npx expo start --dev-client
+```
+
+For multiple AI providers (OpenRouter + ExecuTorch/ML Kit):
+
+```bash
+cd my-app
+OPENROUTER_API_KEY=sk-or-... npx expo run:ios
+# or
+npx expo run:android
+
+npx expo start --dev-client
 ```
 
 ## Development

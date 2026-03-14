@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>create-rn-ai-starter</title>
-  <meta name="description" content="CLI to scaffold Expo React Native projects with modular feature packs." />
+  <meta name="description" content="CLI to scaffold Expo React Native projects with modular feature packs — including built-in AI chat powered by OpenRouter, ExecuTorch (on-device LLMs), or ML Kit. Multi-select AI providers with interactive model selection." />
   <style>
     /*
      * All colors from the app's Radix design tokens (dark mode, blue preset, slate neutral).
@@ -204,7 +204,7 @@
 
   <div class="hero">
     <h1>Scaffold Expo apps<br>with everything wired up.</h1>
-    <p class="sub">A CLI that generates production-ready React Native projects. Pick a UI kit, auth provider, and theme preset — get a working app with routing, state, and screens.</p>
+    <p class="sub">A CLI that generates production-ready React Native projects with AI built-in. Pick a UI kit, auth provider, AI providers, and theme preset — get a working app with routing, state, and screens.</p>
 
     <div class="terminal">
       <div class="terminal-bar">
@@ -212,10 +212,13 @@
         <div class="terminal-dot"></div>
         <div class="terminal-dot"></div>
       </div>
-<pre><span class="g">$</span> <span class="w">npx @trailer-park-oss/create-rn-ai-starter my-app</span>
+<pre><span class="g">$</span> <span class="w">npx create-rn-ai-starter my-app</span>
 
-<span class="g">$</span> <span class="w">npx @trailer-park-oss/create-rn-ai-starter my-app</span> \
-    <span class="b">--ui</span> <span class="o">tamagui</span> <span class="b">--auth</span> <span class="o">clerk</span> <span class="b">--preset</span> <span class="o">radix-purple</span></pre>
+<span class="g">$</span> <span class="w">npx create-rn-ai-starter my-app</span> \
+    <span class="b">--ui</span> <span class="o">tamagui</span> <span class="b">--auth</span> <span class="o">clerk</span> <span class="b">--preset</span> <span class="o">radix-purple</span>
+
+<span class="g">$</span> <span class="w">npx create-rn-ai-starter my-app</span> \
+    <span class="b">--ai</span> <span class="o">online-openrouter</span> <span class="b">--ai</span> <span class="o">on-device-executorch</span></pre>
     </div>
 
     <div class="actions">
@@ -250,8 +253,8 @@
       </div>
       <div class="row">
         <h3>AI</h3>
-        <p>On-device ML Kit or online via OpenRouter.</p>
-        <span class="tag t-wip">Coming soon</span>
+        <p>OpenRouter (cloud), ExecuTorch (on-device LLMs), or ML Kit (object detection). Multi-select support with interactive model selection.</p>
+        <span class="tag t-ok">Ready</span>
       </div>
       <div class="row">
         <h3>DX</h3>
@@ -270,6 +273,7 @@
         <tbody>
           <tr><td>--ui</td><td><code>tamagui</code> <code>gluestack</code></td><td>tamagui</td></tr>
           <tr><td>--auth</td><td><code>clerk</code> <code>none</code></td><td>none</td></tr>
+          <tr><td>--ai</td><td><code>online-openrouter</code> <code>on-device-executorch</code> <code>on-device-mlkit</code> (repeatable)</td><td>online-openrouter</td></tr>
           <tr><td>--preset</td><td><code>radix-blue</code> <code>radix-green</code> <code>radix-purple</code> <code>radix-orange</code> <code>radix-cyan</code> <code>radix-red</code></td><td>radix-blue</td></tr>
           <tr><td>--yes</td><td>—</td><td>—</td></tr>
         </tbody>
@@ -282,11 +286,12 @@
     <p class="desc">Every generated project uses these foundations.</p>
     <div class="rows">
       <div class="row"><h3>Expo SDK + Router</h3><p>Managed workflow with file-based routing and the full Expo ecosystem.</p></div>
-      <div class="row"><h3>Zustand</h3><p>Lightweight state for onboarding, theme, and app state.</p></div>
+      <div class="row"><h3>Zustand</h3><p>Lightweight state for onboarding, theme, and app state. Persisted onboarding completion.</p></div>
       <div class="row"><h3>TanStack Query</h3><p>Data fetching with caching and background refetch.</p></div>
       <div class="row"><h3>React Hook Form + Zod</h3><p>Type-safe forms with schema validation.</p></div>
+      <div class="row"><h3>AI Providers</h3><p>OpenRouter (cloud), ExecuTorch (on-device), and ML Kit with model selector and interactive search.</p></div>
       <div class="row"><h3>Radix Design Tokens</h3><p>12-step color scales, spacing, typography, radius. Light and dark mode. 6 presets.</p></div>
-      <div class="row"><h3>Provider Pattern</h3><p>Abstract interfaces for auth, payments, UI. Swap implementations without touching screens.</p></div>
+      <div class="row"><h3>Provider Pattern</h3><p>Abstract interfaces for auth, payments, UI, and AI. Swap implementations without touching screens.</p></div>
     </div>
   </section>
 
@@ -298,23 +303,25 @@
         <div class="step-body">
           <h4>Scaffold</h4>
           <p>Run the CLI and pick your options.</p>
-          <code>npx @trailer-park-oss/create-rn-ai-starter my-app</code>
+          <code>npx create-rn-ai-starter my-app</code>
         </div>
       </div>
       <div class="step">
         <div class="step-n">2</div>
         <div class="step-body">
           <h4>Configure</h4>
-          <p>If using Clerk, add your publishable key.</p>
+          <p>If using Clerk, add your publishable key. For OpenRouter AI, set your API key.</p>
           <code>EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_...</code>
+          <code>OPENROUTER_API_KEY=sk-or-...</code>
         </div>
       </div>
       <div class="step">
         <div class="step-n">3</div>
         <div class="step-body">
           <h4>Run</h4>
-          <p>Start the dev server.</p>
+          <p>Start the dev server. Use Expo Go for OpenRouter only, or build a dev client for on-device AI.</p>
           <code>cd my-app && npx expo start</code>
+          <code>npx expo run:ios  # or expo run:android</code>
         </div>
       </div>
     </div>
@@ -328,7 +335,7 @@
     &middot;
     <a href="https://github.com/trailer-park-oss/react-native-ai-starter" target="_blank">GitHub</a>
     &middot;
-    <a href="https://www.npmjs.com/package/@trailer-park-oss/create-rn-ai-starter" target="_blank">npm</a>
+    <a href="https://www.npmjs.com/package/create-rn-ai-starter" target="_blank">npm</a>
   </div>
 </footer>
 
