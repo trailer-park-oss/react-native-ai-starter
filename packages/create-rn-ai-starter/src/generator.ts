@@ -100,5 +100,6 @@ function printSummary(
   logger.info('')
   logger.info('Next steps:')
   logger.info(`  cd ${cdPath}`)
-  logger.info('  npx expo start')
+  logger.info('  npx expo run:ios')
+  logger.info('  npx expo run:android')
 }
