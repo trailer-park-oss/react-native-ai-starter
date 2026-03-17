@@ -210,13 +210,16 @@ async function promptForMissing(partial: Partial<StarterConfig>): Promise<Starte
 const DEFAULT_OPENROUTER_MODEL = 'openai/gpt-4o-mini'
 const DEFAULT_EXECUTORCH_MODEL = 'LLAMA3_2_1B'
 
-function normalizeAiProviders(values: string[]): StarterConfig['ai']['providers'] {
+export function normalizeAiProviders(values: string[]): StarterConfig['ai']['providers'] {
   const unique = Array.from(new Set(values))
   if (unique.includes('none')) {
     if (unique.length > 1) {
       throw new Error('AI selection "none" cannot be combined with other providers.')
     }
     return []
+  }
+  if (unique.includes('on-device-mlkit') && unique.includes('on-device-executorch')) {
+    throw new Error('on-device-mlkit cannot be combined with on-device-executorch.')
   }
   return unique as StarterConfig['ai']['providers']
 }

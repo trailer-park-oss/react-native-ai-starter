@@ -249,6 +249,12 @@ For OpenRouter AI, set your API key before running:
 OPENROUTER_API_KEY=sk-or-... npx expo start
 ```
 
+## iOS Build with ExecuTorch
+
+Projects using the ExecuTorch AI provider include an automatic config plugin that fixes the iOS deployment target to 17.0 during `npx expo prebuild` or `npx expo run:ios`. No manual intervention is required.
+
+The plugin (`plugins/withIosDeploymentTarget.js`) is automatically added to your `app.json` when you scaffold with `--ai on-device-executorch` and runs during native code generation, ensuring compatibility with `react-native-executorch` dependencies.
+
 ## Development
 
 ```bash

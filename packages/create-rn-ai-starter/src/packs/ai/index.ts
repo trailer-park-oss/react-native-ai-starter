@@ -47,6 +47,7 @@ export function createAiPack(config: StarterConfig): FeaturePack {
   if (hasOpenRouter) expoInstallPackages.add('expo-image-picker')
   if (hasMlkit) {
     expoInstallPackages.add('@infinitered/react-native-mlkit-object-detection')
+    expoInstallPackages.add('expo-image')
     expoInstallPackages.add('expo-image-picker')
   }
   if (hasExecuTorch) expoInstallPackages.add('react-native-executorch')
@@ -60,6 +61,7 @@ export function createAiPack(config: StarterConfig): FeaturePack {
       'src/providers/ai/',
       'src/lib/model-fetcher.ts',
       'app/(app)/ai.tsx',
+      'plugins/withIosDeploymentTarget.js',
     ],
     async generate(ctx: PackContext) {
       const data = buildTemplateData(ctx)

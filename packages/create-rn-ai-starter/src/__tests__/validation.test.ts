@@ -49,6 +49,19 @@ describe('validateConfig', () => {
     expect(() => validateConfig(config)).not.toThrow()
   })
 
+  it('rejects selecting mlkit and executorch together', () => {
+    const config: StarterConfig = {
+      ...DEFAULT_CONFIG,
+      ai: {
+        providers: ['on-device-mlkit', 'on-device-executorch'],
+        executorch: { model: 'LLAMA3_2_1B' },
+      },
+    }
+    expect(() => validateConfig(config)).toThrow(
+      'Cannot combine on-device-mlkit and on-device-executorch in the same scaffold.',
+    )
+  })
+
   it('rejects invalid ai values inside array', () => {
     const config: StarterConfig = {
       ...DEFAULT_CONFIG,

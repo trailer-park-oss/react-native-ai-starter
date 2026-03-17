@@ -79,6 +79,13 @@ export function validateConfig(config: StarterConfig): void {
     }
   }
 
+  if (
+    config.ai.providers.includes('on-device-mlkit')
+    && config.ai.providers.includes('on-device-executorch')
+  ) {
+    throw new Error('Cannot combine on-device-mlkit and on-device-executorch in the same scaffold.')
+  }
+
   const execPath = config.ai.executorch?.modelPath
   if (typeof execPath !== 'undefined' && typeof execPath !== 'string') {
     throw new Error('Invalid value for executorch.modelPath. Must be a string.')

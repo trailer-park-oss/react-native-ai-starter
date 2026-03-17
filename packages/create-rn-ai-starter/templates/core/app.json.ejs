@@ -1,3 +1,9 @@
+<%
+const plugins = ['expo-router', 'expo-font']
+if (hasExecuTorch) {
+  plugins.push('./plugins/withIosDeploymentTarget.js')
+}
+%>
 <%- JSON.stringify({
   expo: {
     name: projectName,
@@ -15,6 +21,6 @@
       adaptiveIcon: { backgroundColor: '#ffffff' },
       package: 'com.app.' + projectName.replace(/-/g, ''),
     },
-    plugins: ['expo-router', 'expo-font'],
+    plugins: plugins,
   },
 }, null, 2) %>

@@ -4,6 +4,7 @@ import path from 'node:path'
 import os from 'node:os'
 import type { StarterConfig } from '@/types.js'
 import { DEFAULT_CONFIG } from '@/config.js'
+import { applyExecuTorchCompatibility, getExpoInstallPackages } from '@/generator.js'
 import { getActivePacks } from '@/pack-registry.js'
 import { buildBasePackageJson, mergePackDependencies } from '@/utils/package-json.js'
 import { renderTemplates, type TemplateData } from '@/utils/template.js'
@@ -238,6 +239,29 @@ describe('generator — template rendering', () => {
       'utf-8',
     )
     expect(content).toContain('LLAMA3_2_3B')
+  })
+
+  it('renders ExecuTorch iOS plugin with RN 0.76-only compatibility patches', async () => {
+    tmpDir = await mkdtemp(path.join(os.tmpdir(), 'rn-ai-executorch-plugin-'))
+    const data = toTemplateData('ai-executorch', {
+      ...DEFAULT_CONFIG,
+      ai: {
+        providers: ['on-device-executorch'],
+        executorch: { model: 'LLAMA3_2_1B' },
+      },
+    })
+
+    await renderTemplates('ai-executorch', tmpDir, data)
+
+    const content = await readFile(path.join(tmpDir, 'plugins/withIosDeploymentTarget.js'), 'utf-8')
+    expect(content).toContain('ExpoHead.podspec')
+    expect(content).toContain('requiresReactNative076Compatibility')
+    expect(content).toContain('const needsReactNative076Compatibility')
+    expect(content).toContain("s.pod_target_xcconfig = {}")
+    expect(content).toContain("s.to_hash['pod_target_xcconfig']")
+    expect(content).toContain('Expo.podspec')
+    expect(content).toContain('ReactAppDependencyProvider')
+    expect(content).toContain('packageJson.dependencies?.[\'react-native\']')
   })
 
   it('ai screen renders executorch download status UI', async () => {
@@ -640,6 +664,63 @@ describe('package.json generation', () => {
 
     expect(result.overrides).toHaveProperty('react')
     expect(result.overrides.react).toBe(result.dependencies['react'])
+  })
+
+  it('keeps react override aligned after ExecuTorch compatibility rewrites', () => {
+    const executorchConfig: StarterConfig = {
+      ...DEFAULT_CONFIG,
+      ai: {
+        providers: ['on-device-executorch', 'online-openrouter'],
+        openrouter: { model: 'openrouter/free' },
+        executorch: { model: 'LLAMA3_2_1B' },
+      },
+    }
+    const packs = getActivePacks(executorchConfig)
+    const base = buildBasePackageJson('test-app')
+
+    base.dependencies = {
+      expo: '~54.0.0',
+      react: '19.1.0',
+      'react-native': '0.81.5',
+    }
+
+    const result = mergePackDependencies(base, packs)
+    applyExecuTorchCompatibility(result)
+
+    expect(result.overrides.react).toBe(result.dependencies.react)
+  })
+
+  it('pins React 19 types for ExecuTorch compatibility', () => {
+    const result = mergePackDependencies(buildBasePackageJson('test-app'), getActivePacks(DEFAULT_CONFIG))
+
+    applyExecuTorchCompatibility(result)
+
+    expect(result.dependencies.expo).toBe('~54.0.0')
+    expect(result.dependencies.react).toBe('19.1.0')
+    expect(result.dependencies['react-native']).toBe('0.81.5')
+    expect(result.devDependencies['@types/react']).toBe('~19.1.10')
+    expect(result.dependencies['expo-router']).toBeUndefined()
+    expect(result.dependencies['react-native-safe-area-context']).toBeUndefined()
+    expect(result.dependencies['react-native-screens']).toBeUndefined()
+  })
+
+  it('keeps Expo-managed packages on expo install when ExecuTorch is selected', () => {
+    const executorchConfig: StarterConfig = {
+      ...DEFAULT_CONFIG,
+      ai: {
+        providers: ['on-device-executorch', 'online-openrouter'],
+        openrouter: { model: 'openrouter/free' },
+        executorch: { model: 'LLAMA3_2_1B' },
+      },
+    }
+
+    const packages = getExpoInstallPackages(getActivePacks(executorchConfig), true)
+
+    expect(packages).not.toContain('@types/react')
+    expect(packages).toContain('expo-router')
+    expect(packages).toContain('react-native-screens')
+    expect(packages).toContain('react-native-safe-area-context')
+    expect(packages).toContain('react-native-executorch')
   })
 })
 

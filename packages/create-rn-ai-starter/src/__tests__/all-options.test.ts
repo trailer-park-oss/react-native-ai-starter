@@ -800,7 +800,11 @@ describe('package.json dependencies per option combination', () => {
     const aiPack = packs.find((p) => p.id === 'ai')
 
     expect(aiPack?.expoInstallPackages).toEqual(
-      expect.arrayContaining(['expo-image-picker', '@infinitered/react-native-mlkit-object-detection']),
+      expect.arrayContaining([
+        'expo-image',
+        'expo-image-picker',
+        '@infinitered/react-native-mlkit-object-detection',
+      ]),
     )
   })
 
