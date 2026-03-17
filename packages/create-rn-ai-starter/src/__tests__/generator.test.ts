@@ -1,14 +1,15 @@
-import { describe, it, expect, afterEach } from 'vitest'
+import { describe, it, expect, afterEach, vi } from 'vitest'
 import { mkdtemp, rm, readFile, access } from 'node:fs/promises'
 import path from 'node:path'
 import os from 'node:os'
-import type { StarterConfig } from '@/types.js'
+import type { StarterConfig, Logger } from '@/types.js'
 import { DEFAULT_CONFIG } from '@/config.js'
-import { applyExecuTorchCompatibility, getExpoInstallPackages } from '@/generator.js'
+import { applyExecuTorchCompatibility, getExpoInstallPackages, printSummary } from '@/generator.js'
 import { getActivePacks } from '@/pack-registry.js'
 import { buildBasePackageJson, mergePackDependencies } from '@/utils/package-json.js'
 import { renderTemplates, type TemplateData } from '@/utils/template.js'
 import { getUIKit } from '@/packs/ui/kits.js'
+import type { ValidationResult } from '@/packs/pack.interface.js'
 
 async function exists(p: string): Promise<boolean> {
   try {
@@ -319,6 +320,33 @@ describe('generator — template rendering', () => {
 
     const content = await readFile(path.join(tmpDir, 'src/store/theme.ts'), 'utf-8')
     expect(content).toContain("preset: 'radix-blue'")
+  })
+})
+
+describe('generator — summary output', () => {
+  it('warns that ML Kit iOS requires a physical device and updates next steps', () => {
+    const logger: Logger = {
+      info: vi.fn(),
+      success: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+      step: vi.fn(),
+    }
+    const results: { packId: string; result: ValidationResult }[] = [
+      { packId: 'ai', result: { passed: true, checks: [{ name: 'AI screen exists', passed: true }] } },
+    ]
+    const config: StarterConfig = {
+      ...DEFAULT_CONFIG,
+      ai: { providers: ['on-device-mlkit'] },
+    }
+
+    printSummary(logger, config, results, '/tmp/myapp')
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      'ML Kit on iOS does not support Apple Silicon simulators. Use a physical iPhone for `npx expo run:ios`.',
+    )
+    expect(logger.info).toHaveBeenCalledWith('  npx expo run:ios --device')
+    expect(logger.info).not.toHaveBeenCalledWith('  npx expo run:ios')
   })
 })
 
